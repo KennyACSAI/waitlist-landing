@@ -1,0 +1,201 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    @apply bg-ink-950 text-zinc-200 font-sans selection:bg-brand/40 selection:text-white;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+  }
+
+  :focus-visible {
+    outline: 2px solid #28aa97;
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.08];
+  }
+
+  .glass-strong {
+    @apply bg-white/[0.05] backdrop-blur-2xl border border-white/[0.10];
+  }
+
+  /* Liquid glass — strong blur + saturation + layered inner highlight
+     so surfaces feel like refractive glass rather than flat translucent panels. */
+  .liquid-glass {
+    position: relative;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.03) 40%,
+      rgba(40, 170, 151, 0.05) 100%
+    );
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+      0 10px 30px -12px rgba(0, 0, 0, 0.55);
+  }
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.12), transparent 50%);
+    mix-blend-mode: screen;
+    opacity: 0.9;
+  }
+
+  /* iOS 26 Liquid Glass — layered refractive edges (bright inner highlight +
+     dark outer contact shadow), heavy backdrop blur, and a near-transparent
+     base so the surface behind shows through like real glass. */
+  .liquid-glass-ios {
+    position: relative;
+    isolation: isolate;
+    background: rgba(255, 255, 255, 0.015);
+    backdrop-filter: blur(40px) saturate(180%) brightness(1.05);
+    -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.05);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow:
+      inset 0 1px 1.5px rgba(255, 255, 255, 0.55),
+      inset 0 -1px 1px rgba(255, 255, 255, 0.08),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 12px 36px -10px rgba(0, 0, 0, 0.55),
+      0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+  .liquid-glass-ios::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      radial-gradient(130% 90% at 0% 0%, rgba(255, 255, 255, 0.22), transparent 55%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 45%);
+    mix-blend-mode: plus-lighter;
+    opacity: 0.9;
+    z-index: 0;
+  }
+  .liquid-glass-ios::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+    mix-blend-mode: multiply;
+    opacity: 0.5;
+    z-index: 0;
+  }
+  .liquid-glass-ios > * {
+    position: relative;
+    z-index: 1;
+  }
+  /* Kill Chrome/Safari autofill's light background + text color override.
+     The huge inset box-shadow paints "the background" in a transparent
+     color, and the long transition delay stops the yellow flash. */
+  .liquid-glass-ios input:-webkit-autofill,
+  .liquid-glass-ios input:-webkit-autofill:hover,
+  .liquid-glass-ios input:-webkit-autofill:focus,
+  .liquid-glass-ios input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+    box-shadow: 0 0 0 1000px transparent inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    caret-color: #ffffff;
+    transition: background-color 9999s ease-in-out 0s;
+    background-clip: text;
+  }
+
+  /* iOS 26 glass button — brand-tinted refractive pill. */
+  .btn-liquid-glass {
+    @apply relative inline-flex items-center justify-center gap-2 font-medium text-white
+      transition-colors disabled:opacity-60 disabled:cursor-not-allowed;
+    background: linear-gradient(
+      180deg,
+      rgba(56, 204, 182, 0.55) 0%,
+      rgba(40, 170, 151, 0.45) 100%
+    );
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+      0 6px 18px -4px rgba(40, 170, 151, 0.45),
+      0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+  .btn-liquid-glass:hover:not(:disabled) {
+    background: linear-gradient(
+      180deg,
+      rgba(72, 220, 198, 0.65) 0%,
+      rgba(48, 190, 168, 0.55) 100%
+    );
+  }
+
+  .brand-gradient-text {
+    background: linear-gradient(180deg, #ffffff 0%, #bfeee4 55%, #6bdbc0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hairline {
+    @apply relative;
+  }
+  .hairline::after {
+    content: '';
+    @apply absolute inset-x-0 bottom-0 h-px;
+    background: linear-gradient(90deg, transparent, rgba(40, 170, 151, 0.45), transparent);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-medium text-ink-950
+      bg-brand hover:bg-brand-400 transition-colors shadow-glow-sm
+      disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-medium text-zinc-200
+      border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] transition-colors;
+  }
+}
+
+/* Radial background vignette */
+.bg-radial-vignette {
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(40, 170, 151, 0.18), transparent 60%),
+    radial-gradient(900px 600px at 50% 110%, rgba(40, 170, 151, 0.08), transparent 70%),
+    #05080a;
+}
+
+/* Subtle noise */
+.noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.75'/></svg>");
+}
