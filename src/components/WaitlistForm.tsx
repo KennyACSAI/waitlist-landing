@@ -54,15 +54,16 @@ export default function WaitlistForm({ variant = 'hero', onStatusChange }: Waitl
     setMessage('')
     try {
       const normalized = email.trim().toLowerCase()
-      const { error } = await supabase
-        .from('waitlist')
-        .insert({ email: normalized })
-
-      // 23505 = Postgres unique_violation. Treat duplicates as success
-      // so we don't reveal which emails are already on the list.
-      if (error && error.code !== '23505') {
-        throw error
-      }
+      // Call the waitlist-signup Edge Function. The function inserts the
+      // row (via service_role, bypassing RLS) AND sends the confirmation
+      // email via Resend. Direct table inserts were disabled when we
+      // dropped the anon INSERT policy, so the function is now the only
+      // write path. Duplicate-as-success is handled server-side to avoid
+      // an email-enumeration oracle.
+      const { error } = await supabase.functions.invoke('waitlist-signup', {
+        body: { email: normalized },
+      })
+      if (error) throw error
 
       setStatus('success')
       setMessage("You're on the list. We'll be in touch.")
