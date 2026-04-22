@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --brand: #28aa97;
+    --brand-400: #3ec3a7;
+    --brand-hover: #38ccb6;
+  }
+
   html,
   body {
     width: 100%;
@@ -19,106 +25,103 @@
 
   body {
     @apply bg-ink-950 text-zinc-200 font-sans selection:bg-brand/40 selection:text-white;
-    font-feature-settings: 'cv11', 'ss01', 'ss03';
   }
 
-  :focus-visible {
-    outline: 2px solid #28aa97;
+  /* Default focus ring. Scoped to body so inner form elements can opt out
+     via their own rules — a 4px rectangular outline reads broken around a
+     rounded-full pill. */
+  body :focus-visible {
+    outline: 2px solid var(--brand);
     outline-offset: 3px;
     border-radius: 4px;
+  }
+
+  /* Email pill has no focus outline — the input inside is already
+     outline-none, and the default body :focus-visible rule is
+     suppressed here via a more specific selector on the input. */
+  .liquid-glass-apple input:focus-visible {
+    outline: none;
   }
 }
 
 @layer components {
-  .glass {
-    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.08];
-  }
-
-  .glass-strong {
-    @apply bg-white/[0.05] backdrop-blur-2xl border border-white/[0.10];
-  }
-
-  /* Liquid glass — strong blur + saturation + layered inner highlight
-     so surfaces feel like refractive glass rather than flat translucent panels. */
-  .liquid-glass {
+  /* Apple-style liquid glass (adapted from lucasromerodb/liquid-glass-effect-macos
+     for a dark theme). Four-layer stack:
+       __effect  — backdrop blur + SVG distortion filter
+       __tint    — translucent wash, dialed low because our bg is dark
+       __shine   — inset highlight simulating refractive edges
+       __content — actual children, sits on top */
+  .liquid-glass-apple {
     position: relative;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.08) 0%,
-      rgba(255, 255, 255, 0.03) 40%,
-      rgba(40, 170, 151, 0.05) 100%
-    );
-    backdrop-filter: blur(22px) saturate(160%);
-    -webkit-backdrop-filter: blur(22px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    overflow: hidden;
+    color: #fff;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.18),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.04),
-      0 10px 30px -12px rgba(0, 0, 0, 0.55);
+      0 6px 6px rgba(0, 0, 0, 0.35),
+      0 0 20px rgba(0, 0, 0, 0.2);
   }
-  .liquid-glass::before {
-    content: '';
+  .liquid-glass-apple__effect {
     position: absolute;
+    z-index: 0;
     inset: 0;
-    border-radius: inherit;
     pointer-events: none;
-    background: radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.12), transparent 50%);
-    mix-blend-mode: screen;
-    opacity: 0.9;
-  }
-
-  /* iOS 26 Liquid Glass — layered refractive edges (bright inner highlight +
-     dark outer contact shadow), heavy backdrop blur, and a near-transparent
-     base so the surface behind shows through like real glass. */
-  .liquid-glass-ios {
-    position: relative;
+    border-radius: inherit;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    filter: url(#glass-distortion);
+    overflow: hidden;
     isolation: isolate;
-    background: rgba(255, 255, 255, 0.015);
-    backdrop-filter: blur(40px) saturate(180%) brightness(1.05);
-    -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.05);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    box-shadow:
-      inset 0 1px 1.5px rgba(255, 255, 255, 0.55),
-      inset 0 -1px 1px rgba(255, 255, 255, 0.08),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
-      0 12px 36px -10px rgba(0, 0, 0, 0.55),
-      0 2px 6px rgba(0, 0, 0, 0.25);
   }
-  .liquid-glass-ios::before {
-    content: '';
+  .liquid-glass-apple__tint {
     position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    background:
-      radial-gradient(130% 90% at 0% 0%, rgba(255, 255, 255, 0.22), transparent 55%),
-      linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 45%);
-    mix-blend-mode: plus-lighter;
-    opacity: 0.9;
-    z-index: 0;
-  }
-  .liquid-glass-ios::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
-    mix-blend-mode: multiply;
-    opacity: 0.5;
-    z-index: 0;
-  }
-  .liquid-glass-ios > * {
-    position: relative;
     z-index: 1;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    /* Lower than Lucas's 0.25 so dark bg still reads through the glass. */
+    background: rgba(255, 255, 255, 0.1);
+    transition: background 0.2s ease;
   }
-  /* Kill Chrome/Safari autofill's light background + text color override.
-     The huge inset box-shadow paints "the background" in a transparent
-     color, and the long transition delay stops the yellow flash. */
-  .liquid-glass-ios input:-webkit-autofill,
-  .liquid-glass-ios input:-webkit-autofill:hover,
-  .liquid-glass-ios input:-webkit-autofill:focus,
-  .liquid-glass-ios input:-webkit-autofill:active {
+  /* Subtle hover lift on the form pill so it feels interactive on cursor
+     hover. Scoped to the form wrapper via :has() so the button's own
+     tint (if ever reintroduced) doesn't double-brighten. */
+  form.group:hover .liquid-glass-apple__tint {
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .liquid-glass-apple__shine {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    overflow: hidden;
+    box-shadow:
+      inset 2px 2px 1px 0 rgba(255, 255, 255, 0.35),
+      inset -1px -1px 1px 1px rgba(255, 255, 255, 0.35);
+  }
+  .liquid-glass-apple__content {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+  }
+  /* Edge-bottom variant — used by the sticky top bar where we only want
+     the glass to register its presence via a soft bottom edge (drop
+     shadow below + faint highlight line at the bottom). Kills the outer
+     halo and the __shine's 4-sided inset rim so the top/left/right edges
+     blend seamlessly into the surrounding scene. */
+  .liquid-glass-apple.liquid-glass-apple--edge-bottom {
+    box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.5);
+  }
+  .liquid-glass-apple.liquid-glass-apple--edge-bottom .liquid-glass-apple__shine {
+    /* Single inset highlight hugging the bottom edge only. Width is 0
+       top-ward so no rim bleeds up the sides. */
+    box-shadow: inset 0 -1px 0 0 rgba(255, 255, 255, 0.22);
+  }
+  /* Kill Chrome/Safari autofill's light-yellow override inside the pill. */
+  .liquid-glass-apple input:-webkit-autofill,
+  .liquid-glass-apple input:-webkit-autofill:hover,
+  .liquid-glass-apple input:-webkit-autofill:focus,
+  .liquid-glass-apple input:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
     box-shadow: 0 0 0 1000px transparent inset !important;
     -webkit-text-fill-color: #ffffff !important;
@@ -127,66 +130,212 @@
     background-clip: text;
   }
 
-  /* iOS 26 glass button — brand-tinted refractive pill. */
+  /* Editorial flat pill — solid brand teal, no gloss/glass.
+     Matches the template's NOTIFY ME pill, recolored to brand. */
   .btn-liquid-glass {
-    @apply relative inline-flex items-center justify-center gap-2 font-medium text-white
+    @apply relative inline-flex items-center justify-center gap-2 font-medium text-black
       transition-colors disabled:opacity-60 disabled:cursor-not-allowed;
-    background: linear-gradient(
-      180deg,
-      rgba(56, 204, 182, 0.55) 0%,
-      rgba(40, 170, 151, 0.45) 100%
-    );
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.55),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.18),
-      0 6px 18px -4px rgba(40, 170, 151, 0.45),
-      0 2px 6px rgba(0, 0, 0, 0.25);
+    background: var(--brand);
+    border: 0;
+    box-shadow: none;
+    letter-spacing: 0.02em;
   }
   .btn-liquid-glass:hover:not(:disabled) {
-    background: linear-gradient(
-      180deg,
-      rgba(72, 220, 198, 0.65) 0%,
-      rgba(48, 190, 168, 0.55) 100%
-    );
+    background: var(--brand-hover);
   }
 
-  .brand-gradient-text {
-    background: linear-gradient(180deg, #ffffff 0%, #bfeee4 55%, #6bdbc0 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  /* PC spacer single-knob — all four vertical gaps below the header share a
+     single flex-grow value on ≥640px viewports. The value is sourced from
+     --pc-spacer-flex on the page root (set from PC_SPACER_FLEX in App.tsx),
+     so one number controls every gap and the four distances stay equal.
+     On narrow screens this rule doesn't apply; mobile weights live on
+     each spacer div (flex-1 / flex-[0.5]). */
+  @media (min-width: 640px) {
+    .pc-spacer-equal {
+      flex-grow: var(--pc-spacer-flex, 10);
+      flex-shrink: 1;
+      flex-basis: 0%;
+    }
   }
 
-  .hairline {
-    @apply relative;
+  /* Editorial nav tokens — mirror the template's tiny top-bar */
+  .nav-link {
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.15s ease;
   }
-  .hairline::after {
-    content: '';
-    @apply absolute inset-x-0 bottom-0 h-px;
-    background: linear-gradient(90deg, transparent, rgba(40, 170, 151, 0.45), transparent);
+  .nav-link:hover {
+    color: #ffffff;
   }
-
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-medium text-ink-950
-      bg-brand hover:bg-brand-400 transition-colors shadow-glow-sm
-      disabled:opacity-60 disabled:cursor-not-allowed;
-  }
-
-  .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-medium text-zinc-200
-      border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] transition-colors;
+  .nav-link-active {
+    color: #ffffff;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
   }
 }
 
-/* Radial background vignette */
-.bg-radial-vignette {
-  background:
-    radial-gradient(1200px 700px at 50% -10%, rgba(40, 170, 151, 0.18), transparent 60%),
-    radial-gradient(900px 600px at 50% 110%, rgba(40, 170, 151, 0.08), transparent 70%),
-    #05080a;
+/* Intro choreography.
+   Root carries data-intro = "pending" | "enter" | "done".
+     pending — useLayoutEffect hasn't measured yet. Hide root to avoid a flash
+               of the resting layout before the transform is applied.
+     enter   — headline is translated to viewport center and scaled up via
+               inline style on .intro-headline; everything else is hidden /
+               shifted down.
+     done    — transform removed from headline, fade-up elements settle. All
+               transitions fire here.
+
+   .intro-headline transitions its own transform (driven by inline style).
+   .intro-fade backgrounds fade opacity only (no translate — they're fixed
+   full-viewport layers, translating them reveals empty ink-950).
+   .intro-fade-up foreground content both fades AND rises slightly. */
+/* Headline motion is split across TWO elements so translate and scale can
+   transition on different timelines:
+     .intro-headline-wrap  — carries the translate (viewport center → rest)
+     .intro-headline       — carries the scale (oversized → final, ONE
+                             continuous transition) and the opening
+                             opacity fade
+
+   Wrapper transitions:
+   - transform always declared so the enter→done translate fires
+     reliably cross-browser. During pending/enter, transform-duration is
+     forced to 0 so delta re-measurements (triggered by layout shifts
+     like the async pin glb finishing load) update instantly.
+   - Uses cubic-bezier(0.4, 0, 0.2, 1) — standard ease-in-out — for a
+     gentler departure from rest. The aggressive ease-out curve we use
+     elsewhere starts fast, which made the glide feel like it "popped"
+     out of the hold. Ease-in-out ramps up gradually, so translate
+     joining the (already-in-progress) scale motion reads as continuous.
+
+   Headline transitions:
+   - scale transitions over 2500ms, one continuous ease that carries the
+     text from headlineStartScale (e.g. 2.1) to 1 across the FULL intro
+     (fade-in + hold + glide). Because the transition doesn't restart at
+     the hold→glide boundary, there's no velocity-zero pause — the text
+     is always shrinking, so when translate kicks in on top of it the
+     combined motion reads as continuous, not stop-start.
+   - opacity fades in over 1100ms on pending→enter. During pending,
+     opacity transition-duration stays 1100ms so the enter flip fires
+     the fade. Transform transition-duration is 0ms during pending so
+     the initial scaled-up state applies instantly on mount. */
+.intro-headline-wrap {
+  transition: transform 1600ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-intro='pending'] .intro-headline-wrap,
+[data-intro='enter'] .intro-headline-wrap {
+  transition-duration: 0ms;
+}
+.intro-headline {
+  transition:
+    transform 2500ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 1100ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-intro='pending'] .intro-headline {
+  transition-duration: 0ms, 1100ms;
+}
+.intro-fade {
+  transition: opacity 5000ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.intro-fade-up {
+  transition:
+    opacity 1400ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* will-change is expensive — only hint the GPU during the transition
+   (enter phase + the couple of seconds while it settles). Leaving it on
+   permanently pins elements to their own compositor layer, which on iOS
+   renders at reduced precision and causes blurry backdrop-filter
+   children. */
+[data-intro='enter'] .intro-fade-up {
+  will-change: opacity, transform;
+}
+
+/* Pin placeholder height is locked BEFORE the intro's glide phase (the
+   pinScreenH update effect in App.tsx is gated on !introDone), so no
+   transition is needed — any flex-spacer redistribution happens while
+   layers are still hidden during fade-in, not after the text has
+   visibly landed. A transition here would re-introduce a post-landing
+   "stretching" shift if pinScreenH ever changed after introDone. */
+/* Keep fade-layers hidden during BOTH pending and enter — relying on a
+   single visibility:hidden on the root proved leaky; explicit per-class
+   opacity/transform rules guarantee the first paint is just black + the
+   centered headline, nothing else. */
+[data-intro='pending'] .intro-fade,
+[data-intro='enter'] .intro-fade {
+  opacity: 0;
+}
+[data-intro='pending'] .intro-fade-up,
+[data-intro='enter'] .intro-fade-up {
+  opacity: 0;
+  transform: translateY(80px);
+}
+/* During pending, headline delta hasn't been measured yet, so hide it
+   too — otherwise it would flash at its resting position (not centered)
+   before useLayoutEffect commits the transform. */
+[data-intro='pending'] .intro-headline {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-headline,
+  .intro-fade,
+  .intro-fade-up {
+    transition: none;
+  }
+}
+
+/* Reveal animation for the header bar and form wrapper — both contain
+   .liquid-glass-apple with backdrop-filter. Ancestor opacity < 1 kills
+   backdrop-filter on the descendant __effect element (iOS Safari and
+   some Chromium forks persistently, others during the transition only),
+   so we CANNOT animate opacity on .intro-reveal-header / .intro-reveal-form
+   themselves — doing so broke the glass entirely on PC and caused a
+   visible blink on mobile.
+
+   Instead: animate opacity on the INNER glass layers (__tint, __shine,
+   __content) while leaving .__effect at opacity 1 always. The
+   backdrop-filter element never drops below full opacity, so blur keeps
+   compositing the whole time. The white tint + content still fade in,
+   which reads as "fade" to the viewer.
+
+   Layering during the reveal:
+     __effect (opacity 1, blur always live)
+     __tint (fades 0 → 1) — white 10% overlay
+     __shine (fades 0 → 1) — edge highlight
+     __content (fades 0 → 1) — logo, text, form children
+
+   Triggered by data-intro='done'. visibility on the outer wrapper
+   still gates the element before introGlideStarted flips, preventing
+   a flash-of-resting-layout.
+
+   `both` fill mode keeps the from-state applied before the animation
+   starts and the to-state applied after it ends, so there's no
+   snap-back at the end. */
+@keyframes introGlassInnerFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+[data-intro='done'] .intro-reveal-header .liquid-glass-apple__tint,
+[data-intro='done'] .intro-reveal-header .liquid-glass-apple__shine,
+[data-intro='done'] .intro-reveal-header .liquid-glass-apple__content {
+  animation: introGlassInnerFade 5500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+[data-intro='done'] .intro-reveal-form .liquid-glass-apple__tint,
+[data-intro='done'] .intro-reveal-form .liquid-glass-apple__shine,
+[data-intro='done'] .intro-reveal-form .liquid-glass-apple__content {
+  animation: introGlassInnerFade 5700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-intro='done'] .intro-reveal-header .liquid-glass-apple__tint,
+  [data-intro='done'] .intro-reveal-header .liquid-glass-apple__shine,
+  [data-intro='done'] .intro-reveal-header .liquid-glass-apple__content,
+  [data-intro='done'] .intro-reveal-form .liquid-glass-apple__tint,
+  [data-intro='done'] .intro-reveal-form .liquid-glass-apple__shine,
+  [data-intro='done'] .intro-reveal-form .liquid-glass-apple__content {
+    animation: none;
+  }
 }
 
 /* Subtle noise */

@@ -3,7 +3,22 @@
     "allow": [
       "Bash(npx tsc *)",
       "mcp__plugin_figma_figma__get_design_context",
-      "mcp__plugin_figma_figma__get_screenshot"
+      "mcp__plugin_figma_figma__get_screenshot",
+      "Bash(yarn build *)",
+      "Bash(git restore *)",
+      "Bash(npx --yes @gltf-transform/cli optimize public/Meshy_AI_pin_0421123231_texture.glb public/yoova-pin.glb --texture-size 1024 --texture-compress webp)",
+      "WebSearch",
+      "Bash(npx --yes @gltf-transform/cli optimize \"public/Meshy_AI_jelly_0421142742_texture.glb\" \"public/yoova-pin.glb\" --texture-size 1024 --texture-compress webp)",
+      "Bash(claude mcp *)",
+      "Bash(yarn add *)",
+      "Bash(node *)",
+      "Bash(yarn remove *)",
+      "Bash(curl -s https://raw.githubusercontent.com/lucasromerodb/liquid-glass-effect-macos/main/index.html)",
+      "Bash(npx vite *)",
+      "Bash(python *)",
+      "Bash(pip install *)",
+      "Bash(where ffmpeg *)",
+      "Bash(npm run *)"
     ]
   }
 }

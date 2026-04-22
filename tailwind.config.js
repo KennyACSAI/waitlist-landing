@@ -34,7 +34,15 @@ export default {
           'Roboto',
           'sans-serif',
         ],
-        display: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: [
+          'Poppins',
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'Segoe UI',
+          'Roboto',
+          'sans-serif',
+        ],
       },
       boxShadow: {
         glow: '0 0 60px -10px rgba(40, 170, 151, 0.55)',
@@ -44,6 +52,9 @@ export default {
         'fade-up': 'fadeUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both',
         'fade-in': 'fadeIn 0.9s ease-out both',
         shimmer: 'shimmer 2.4s linear infinite',
+        'draw-check': 'drawCheck 0.45s cubic-bezier(0.25, 1, 0.5, 1) both',
+        'message-in': 'messageIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'glow-pulse': 'glowPulse 1.2s cubic-bezier(0.16, 1, 0.3, 1) both',
       },
       keyframes: {
         fadeUp: {
@@ -57,6 +68,19 @@ export default {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        drawCheck: {
+          '0%': { strokeDashoffset: '24' },
+          '100%': { strokeDashoffset: '0' },
+        },
+        messageIn: {
+          '0%': { opacity: '0', transform: 'translateY(-4px) scale(0.96)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        glowPulse: {
+          '0%': { boxShadow: '0 0 0 0 rgba(40, 170, 151, 0)' },
+          '30%': { boxShadow: '0 0 0 6px rgba(40, 170, 151, 0.35)' },
+          '100%': { boxShadow: '0 0 0 18px rgba(40, 170, 151, 0)' },
         },
       },
     },

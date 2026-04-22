@@ -1,4 +1,4 @@
-import { useRef, useState, FormEvent } from 'react'
+import { useEffect, useRef, useState, FormEvent } from 'react'
 import { pushKeystroke, triggerPinForm } from '../three/particleStore'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
@@ -7,6 +7,10 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 interface WaitlistFormProps {
   variant?: 'hero' | 'inline'
+  /** Fires whenever the form's internal status changes. Lets the parent
+   *  react to success/error — e.g. hide a social-proof line that would
+   *  otherwise overlap the absolutely-positioned status message. */
+  onStatusChange?: (status: Status) => void
 }
 
 /**
@@ -25,11 +29,15 @@ function inputCenterToWorld(el: HTMLElement) {
   return { x: ndcX * halfW, y: ndcY * halfH, z: 0 }
 }
 
-export default function WaitlistForm({ variant = 'hero' }: WaitlistFormProps) {
+export default function WaitlistForm({ variant = 'hero', onStatusChange }: WaitlistFormProps) {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<Status>('idle')
   const [message, setMessage] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    onStatusChange?.(status)
+  }, [status, onStatusChange])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -63,68 +71,81 @@ export default function WaitlistForm({ variant = 'hero' }: WaitlistFormProps) {
       onSubmit={handleSubmit}
       noValidate
       aria-label="Join the waitlist"
-      className={[
-        'liquid-glass-ios group relative mx-auto flex w-full max-w-md items-center gap-2 rounded-full p-1.5',
-        isHero ? 'shadow-glow-sm' : '',
-      ].join(' ')}>
-      <label htmlFor={`email-${variant}`} className="sr-only">
-        Email address
-      </label>
-      <input
-        ref={inputRef}
-        id={`email-${variant}`}
-        type="email"
-        required
-        autoComplete="email"
-        inputMode="email"
-        placeholder="you@example.com"
-        value={email}
-        onChange={(e) => {
-          setEmail(e.target.value)
-          if (status !== 'idle') setStatus('idle')
-          const target = inputRef.current ? inputCenterToWorld(inputRef.current) : undefined
-          pushKeystroke(target)
-        }}
-        disabled={status === 'loading' || status === 'success'}
-        className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-base text-white placeholder:text-zinc-500 outline-none disabled:opacity-60 sm:text-[15px]"
-      />
-      <button
-        type="submit"
-        disabled={status === 'loading' || status === 'success'}
-        className="btn-liquid-glass min-w-[108px] rounded-full px-3 py-2.5 text-sm sm:min-w-[128px] sm:px-4 sm:text-base">
-        {status === 'loading' && (
-          <span className="flex items-center gap-2">
-            <Spinner />
-            <span>Joining…</span>
-          </span>
-        )}
-        {status === 'success' && (
-          <span className="flex items-center gap-1.5">
-            <CheckIcon />
-            <span>Joined</span>
-          </span>
-        )}
-        {(status === 'idle' || status === 'error') && <span>Join waitlist</span>}
-      </button>
+      className="group relative mx-auto w-full max-w-md">
+      <div
+        className={[
+          'liquid-glass-apple relative w-full items-center rounded-full p-0.5',
+          isHero ? 'shadow-glow-sm' : '',
+          status === 'success' ? 'animate-glow-pulse motion-reduce:animate-none' : '',
+        ].join(' ')}>
+        <div aria-hidden className="liquid-glass-apple__effect" />
+        <div aria-hidden className="liquid-glass-apple__tint" />
+        <div aria-hidden className="liquid-glass-apple__shine" />
+        <div className="liquid-glass-apple__content flex items-stretch">
+          <label htmlFor={`email-${variant}`} className="sr-only">
+            Email address
+          </label>
+          <input
+            ref={inputRef}
+            id={`email-${variant}`}
+            type="email"
+            required
+            autoComplete="email"
+            inputMode="email"
+            placeholder="Your Email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              if (status !== 'idle') setStatus('idle')
+              const target = inputRef.current ? inputCenterToWorld(inputRef.current) : undefined
+              pushKeystroke(target)
+            }}
+            disabled={status === 'loading' || status === 'success'}
+            className="min-w-0 flex-1 bg-transparent px-5 py-3.5 text-base text-white placeholder:text-white/65 outline-none disabled:opacity-60 sm:text-[15px]"
+          />
+          <button
+            type="submit"
+            disabled={status === 'loading' || status === 'success'}
+            className="btn-liquid-glass min-w-[108px] rounded-full px-5 text-sm sm:min-w-[128px] sm:px-6 sm:text-base">
+            {status === 'loading' && (
+              <>
+                <Spinner />
+                <span>Joining…</span>
+              </>
+            )}
+            {status === 'success' && (
+              <>
+                <CheckIcon animated />
+                <span>Joined</span>
+              </>
+            )}
+            {(status === 'idle' || status === 'error') && <span>Join waitlist</span>}
+          </button>
+        </div>
+      </div>
 
       {/* Live region for status */}
       <p
+        role="status"
         aria-live="polite"
+        aria-atomic="true"
         className={[
-          'absolute left-0 right-0 top-full mt-2 text-center text-sm transition-opacity',
-          message ? 'opacity-100' : 'opacity-0',
+          'absolute left-0 right-0 top-full mt-2 flex items-center justify-center gap-1.5 text-center text-sm',
+          message ? 'opacity-100' : 'opacity-0 transition-opacity',
+          status === 'success' && 'text-brand-300 animate-message-in motion-reduce:animate-none',
           status === 'error' && 'text-rose-400',
-          status === 'success' && 'text-brand-300',
         ]
           .filter(Boolean)
           .join(' ')}>
-        {message}
+        {status === 'error' && <ErrorIcon />}
+        {status === 'success' && <CheckIcon />}
+        <span>{message}</span>
       </p>
     </form>
   )
 }
 
-function CheckIcon() {
+function CheckIcon({ animated = false }: { animated?: boolean }) {
   return (
     <svg
       width="16"
@@ -136,7 +157,30 @@ function CheckIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true">
-      <path d="M5 12.5 L10 17.5 L19 7.5" />
+      <path
+        d="M5 12.5 L10 17.5 L19 7.5"
+        strokeDasharray={animated ? '24' : undefined}
+        className={animated ? 'animate-draw-check motion-reduce:animate-none' : undefined}
+      />
+    </svg>
+  )
+}
+
+function ErrorIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 7v6" />
+      <path d="M12 17h.01" />
     </svg>
   )
 }
