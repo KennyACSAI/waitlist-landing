@@ -86,8 +86,26 @@ export default function YoovaPin({
     // reported RELATIVE to the pin's own world position (via getWorldPosition)
     // so any ancestor transform — e.g. an intro-animation wrapper that
     // offsets the pin during slide-in — doesn't leak into the measurement.
-    if (groupRef.current && onMeasured) {
-      groupRef.current.updateMatrixWorld(true)
+    //
+    // Deferred to the next frame via rAF because useEffect fires after
+    // React commit but potentially BEFORE R3F's first render tick that
+    // walks the scene graph and updates matrixWorld on ancestors. If we
+    // measure synchronously, setFromObject() can read identity
+    // matrixWorld for the intro wrapper + 90° rotation group — Box3
+    // lands in the wrong coordinate frame, bottomOffsetY comes out
+    // wrong, and side pins anchor to a nonsensical tip position.
+    // Dev works because StrictMode double-invokes effects and the
+    // second pass catches the now-current matrices; prod fires once
+    // and loses the race.
+    //
+    // updateWorldMatrix(true, true) belt-and-suspenders: force parents
+    // up the chain THEN children down, so ancestor transforms (intro
+    // offset, rotation group) are guaranteed current when setFromObject
+    // samples world vertices.
+    if (!onMeasured) return
+    const raf = requestAnimationFrame(() => {
+      if (!groupRef.current) return
+      groupRef.current.updateWorldMatrix(true, true)
       const box = new THREE.Box3().setFromObject(groupRef.current)
       const size = new THREE.Vector3()
       const center = new THREE.Vector3()
@@ -100,7 +118,8 @@ export default function YoovaPin({
         centerOffsetY: center.y - worldPos.y,
         bottomOffsetY: box.min.y - worldPos.y,
       })
-    }
+    })
+    return () => cancelAnimationFrame(raf)
   }, [sceneClone, onMeasured])
 
   useFrame((_, dt) => {
