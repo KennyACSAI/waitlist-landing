@@ -391,7 +391,7 @@ export default function App() {
               <YoovaLogoMark />
               <span
                 className="text-sm font-semibold tracking-tight text-white sm:text-base"
-                style={{ fontFamily: "'Poppins', system-ui, sans-serif" }}>
+                style={{ fontFamily: "'Inclusive Sans', system-ui, sans-serif" }}>
                 yoova
               </span>
             </a>
@@ -582,21 +582,34 @@ function CyclingWord({ words }: { words: string[] }) {
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {memoWords[index]}
       </span>
-      {memoWords.map((word, i) => (
-        <motion.span
-          key={i}
-          aria-hidden
-          className="absolute left-0 top-0 whitespace-pre font-medium text-white"
-          initial={{ opacity: 0, y: '-100' }}
-          transition={{ type: 'spring', stiffness: 50 }}
-          animate={
-            index === i
-              ? { y: 0, opacity: 1 }
-              : { y: index > i ? -150 : 150, opacity: 0 }
-          }>
-          {word}
-        </motion.span>
-      ))}
+      {memoWords.map((word, i) => {
+        const isActive = index === i
+        return (
+          <motion.span
+            key={i}
+            aria-hidden
+            className="absolute left-0 top-0 whitespace-pre font-medium text-white"
+            initial={{ opacity: 0, y: '-100' }}
+            // Split per-property transitions: opacity crossfades fast (220ms)
+            // so outgoing and incoming words don't ghost-overlap mid-swap,
+            // while y keeps the spring slide for character. Incoming opacity
+            // delays slightly so outgoing finishes fading before the new
+            // word peaks — removes the "both visible at once" sliver.
+            transition={{
+              y: { type: 'spring', stiffness: 80, damping: 18 },
+              opacity: isActive
+                ? { duration: 0.18, delay: 0.14, ease: 'easeOut' }
+                : { duration: 0.16, ease: 'easeIn' },
+            }}
+            animate={
+              isActive
+                ? { y: 0, opacity: 1 }
+                : { y: index > i ? -150 : 150, opacity: 0 }
+            }>
+            {word}
+          </motion.span>
+        )
+      })}
     </span>
   )
 }
@@ -647,8 +660,8 @@ function YoovaLogoMark() {
 function InstagramIcon() {
   return (
     <svg
-      width="16"
-      height="16"
+      width="22"
+      height="22"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -665,7 +678,7 @@ function InstagramIcon() {
 
 function LinkedInIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.75h4v11H3v-11Zm6.75 0H13.5v1.6h.06c.52-.92 1.8-1.9 3.69-1.9 3.95 0 4.68 2.6 4.68 5.98v5.32H18v-4.72c0-1.13-.02-2.58-1.58-2.58-1.58 0-1.82 1.23-1.82 2.5v4.8H9.75v-11Z" />
     </svg>
   )

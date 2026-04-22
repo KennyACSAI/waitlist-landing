@@ -18,7 +18,22 @@
       "Bash(python *)",
       "Bash(pip install *)",
       "Bash(where ffmpeg *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "mcp__magic__21st_magic_component_inspiration",
+      "Skill(impeccable:critique)",
+      "Bash(npx knip *)",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__get_publishable_keys",
+      "Bash(npm install *)",
+      "mcp__supabase__get_advisors",
+      "Bash(npm audit *)",
+      "Bash(npx secretlint *)",
+      "Bash(npx husky *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(gh auth *)",
+      "Bash(git add *)"
     ]
   }
 }

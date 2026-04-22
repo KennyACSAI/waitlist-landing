@@ -26,7 +26,7 @@ export default {
       },
       fontFamily: {
         sans: [
-          'Poppins',
+          'Inclusive Sans',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',
@@ -35,7 +35,7 @@ export default {
           'sans-serif',
         ],
         serif: [
-          'Poppins',
+          'Inclusive Sans',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',
@@ -51,7 +51,6 @@ export default {
       animation: {
         'fade-up': 'fadeUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both',
         'fade-in': 'fadeIn 0.9s ease-out both',
-        shimmer: 'shimmer 2.4s linear infinite',
         'draw-check': 'drawCheck 0.45s cubic-bezier(0.25, 1, 0.5, 1) both',
         'message-in': 'messageIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both',
         'glow-pulse': 'glowPulse 1.2s cubic-bezier(0.16, 1, 0.3, 1) both',
@@ -64,10 +63,6 @@ export default {
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
         },
         drawCheck: {
           '0%': { strokeDashoffset: '24' },

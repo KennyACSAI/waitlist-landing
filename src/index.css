@@ -68,7 +68,6 @@
     border-radius: inherit;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    filter: url(#glass-distortion);
     overflow: hidden;
     isolation: isolate;
   }
@@ -160,7 +159,7 @@
 
   /* Editorial nav tokens — mirror the template's tiny top-bar */
   .nav-link {
-    font-family: 'Poppins', system-ui, sans-serif;
+    font-family: 'Inclusive Sans', system-ui, sans-serif;
     font-size: 12px;
     font-weight: 400;
     letter-spacing: 0.01em;

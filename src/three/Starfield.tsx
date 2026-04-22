@@ -12,7 +12,7 @@ import * as THREE from 'three'
  * texture. Lines use per-vertex brightness as an alpha proxy (additive
  * blending on the dark bg) so they fade smoothly with distance.
  */
-const POINT_COUNT = 55
+const POINT_COUNT = 28
 const LINK_DISTANCE = 2.9
 const MAX_LINKS = POINT_COUNT * 20
 const BOUNDS = { x: 9, y: 6 }
@@ -27,7 +27,7 @@ const BG_PIN_BLUR_PX = 0.5
 // Line brightness multiplier. 1px WebGL lines can't be literally blurred,
 // so we dim them to match the soft pins — they fade into the backdrop
 // instead of cutting across it. 1 = original, ~0.55 = hazy, ~0.3 = faint.
-const BG_LINE_INTENSITY = 0.7
+const BG_LINE_INTENSITY = 0.45
 
 // Connection lifecycle — trace-on + fade-out. Durations in seconds.
 const FORM_SECONDS = 0.5

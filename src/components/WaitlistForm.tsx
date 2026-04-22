@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, FormEvent } from 'react'
 import { pushKeystroke, triggerPinForm } from '../three/particleStore'
+import { supabase } from '../lib/supabase'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
@@ -52,8 +53,17 @@ export default function WaitlistForm({ variant = 'hero', onStatusChange }: Waitl
     setStatus('loading')
     setMessage('')
     try {
-      // Replace with real API call
-      await new Promise((res) => setTimeout(res, 900))
+      const normalized = email.trim().toLowerCase()
+      const { error } = await supabase
+        .from('waitlist')
+        .insert({ email: normalized })
+
+      // 23505 = Postgres unique_violation. Treat duplicates as success
+      // so we don't reveal which emails are already on the list.
+      if (error && error.code !== '23505') {
+        throw error
+      }
+
       setStatus('success')
       setMessage("You're on the list. We'll be in touch.")
       setEmail('')
