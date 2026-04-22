@@ -130,17 +130,45 @@
   }
 
   /* Editorial flat pill — solid brand teal, no gloss/glass.
-     Matches the template's NOTIFY ME pill, recolored to brand. */
+     Matches the template's NOTIFY ME pill, recolored to brand.
+     Custom transition (not Tailwind's `transition-colors`) so the
+     background AND text-color swaps between teal and white run on
+     the same 500ms curve. Longer than the default keystroke cadence
+     so the color journey reads as deliberate — teal while idle,
+     drifting to white as the user types a partial email, then
+     returning to teal the moment it's well-formed. */
   .btn-liquid-glass {
     @apply relative inline-flex items-center justify-center gap-2 font-medium text-black
-      transition-colors disabled:opacity-60 disabled:cursor-not-allowed;
+      disabled:opacity-60 disabled:cursor-not-allowed;
     background: var(--brand);
     border: 0;
     box-shadow: none;
     letter-spacing: 0.02em;
+    transition:
+      background-color 500ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 500ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .btn-liquid-glass:hover:not(:disabled) {
     background: var(--brand-hover);
+  }
+  /* Inactive variant — applied while the user is typing a partial/invalid
+     email. Frosted dark glass: a deep translucent well with its own
+     backdrop blur, so the button reads as "gated behind glass, not
+     yet accepting input." Integrates naturally with the surrounding
+     liquid-glass pill's aesthetic instead of fighting it with solid
+     white (which reads as gray over dark bg) or muted teal (which
+     still reads "go"). Still clickable — submitting an invalid email
+     triggers the inline error. Backdrop-filter itself doesn't
+     transition; only background-color + color animate on the 500ms
+     curve inherited from .btn-liquid-glass above. */
+  .btn-liquid-glass--inactive {
+    background: rgba(10, 15, 20, 0.55);
+    color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  }
+  .btn-liquid-glass--inactive:hover:not(:disabled) {
+    background: rgba(10, 15, 20, 0.7);
   }
 
   /* PC spacer single-knob — all four vertical gaps below the header share a

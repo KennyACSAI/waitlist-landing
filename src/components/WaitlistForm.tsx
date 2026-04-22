@@ -76,6 +76,12 @@ export default function WaitlistForm({ variant = 'hero', onStatusChange }: Waitl
   }
 
   const isHero = variant === 'hero'
+  // While the user is actively typing something that isn't yet a
+  // well-formed email, drop the button to a white-glass inactive state.
+  // Empty field and complete-valid address both read as teal, so the
+  // transition is teal -> white -> teal over the typing arc.
+  const isPartial = email.length > 0 && !emailRegex.test(email)
+  const showInactive = isPartial && (status === 'idle' || status === 'error')
 
   return (
     <form
@@ -107,7 +113,16 @@ export default function WaitlistForm({ variant = 'hero', onStatusChange }: Waitl
             value={email}
             onChange={(e) => {
               setEmail(e.target.value)
-              if (status !== 'idle') setStatus('idle')
+              // Reset the status banner AND clear its text together.
+              // Without clearing message, a stale error string (e.g.
+              // "Please enter a valid email address.") stays visible
+              // at opacity-100 after the user types/deletes, while
+              // App.tsx simultaneously fades the social-proof line
+              // back in — both show stacked.
+              if (status !== 'idle') {
+                setStatus('idle')
+                setMessage('')
+              }
               const target = inputRef.current ? inputCenterToWorld(inputRef.current) : undefined
               pushKeystroke(target)
             }}
@@ -117,7 +132,12 @@ export default function WaitlistForm({ variant = 'hero', onStatusChange }: Waitl
           <button
             type="submit"
             disabled={status === 'loading' || status === 'success'}
-            className="btn-liquid-glass min-w-[108px] rounded-full px-5 text-sm sm:min-w-[128px] sm:px-6 sm:text-base">
+            className={[
+              'btn-liquid-glass min-w-[108px] rounded-full px-5 text-sm sm:min-w-[128px] sm:px-6 sm:text-base',
+              showInactive ? 'btn-liquid-glass--inactive' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}>
             {status === 'loading' && (
               <>
                 <Spinner />
