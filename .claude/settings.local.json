@@ -33,7 +33,15 @@
       "Bash(npx husky *)",
       "Bash(echo \"exit=$?\")",
       "Bash(gh auth *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(curl -sI https://yoova.pages.dev/yoova-pin.glb)",
+      "Bash(curl -sI https://yoova.pages.dev/)",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__list_edge_functions",
+      "mcp__supabase__deploy_edge_function",
+      "mcp__supabase__get_logs"
     ]
   }
 }
