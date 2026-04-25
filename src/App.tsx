@@ -1,6 +1,6 @@
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { motion } from 'framer-motion'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import WaitlistForm from './components/WaitlistForm'
+import { TextEffect } from './components/ui/text-effect'
 import type { PinMeasurement } from './three/YoovaPin'
 
 // Code-split the R3F scene: the 10MB glb + three.js chunk only downloads
@@ -463,7 +463,7 @@ export default function App() {
         </div>
         <p className="intro-fade-up flex items-baseline justify-center gap-2 text-2xl font-light leading-tight text-zinc-200 sm:gap-3 sm:text-4xl md:text-5xl">
           <span className="text-zinc-400">of</span>
-          <CyclingWord words={['Socializing', 'Discovering', 'Connecting']} />
+          <CyclingTextEffect words={['Socializing', 'Discovering', 'Connecting']} />
         </p>
       </section>
 
@@ -543,73 +543,102 @@ export default function App() {
 }
 
 /**
- * Cycles through `words` with per-character stagger. Letters rise + fade
- * in left-to-right on entry, then fall + fade out right-to-left on exit.
- * A 3-phase state machine (in → hold → out → next) guarantees the exit
- * fully plays before the next word starts entering — a React key swap
- * alone would cut the exit short.
+ * Cycles through `words` using TextEffect's blur preset. Each word's
+ * letters blur+fade in with a per-character stagger; the outgoing word
+ * cross-fades out via the wrapper's CSS opacity transition so we don't
+ * fight TextEffect's internal AnimatePresence (which choked on combined
+ * trigger + children changes and stuck mid-animation on the second word).
  *
- * Hidden ghost of the longest word reserves horizontal width so the
- * centered line doesn't reflow. Reduced-motion users get a simple
- * opacity fade on the whole word.
+ * Pattern: every cycle remounts a fresh TextEffect via `key={index}`.
+ * That guarantees clean state per word — no stale AnimatePresence
+ * snapshots, no half-finished exit animations leaking into the next
+ * mount. The visual softness (no hard cut between words) comes from the
+ * brief window where show=false fades the previous word out before the
+ * new key value mounts the next one in.
+ *
+ * Cadence (per word):
+ *   HOLD_MS — time the word stays fully visible before fading out
+ *   FADE_MS — wrapper opacity fade duration; matches the gap before
+ *             the new word's letters begin their blur-in
+ *
+ * A hidden ghost of the longest word reserves horizontal width so the
+ * centered "of [word]" line never reflows mid-cycle.
  */
-function CyclingWord({ words }: { words: string[] }) {
-  // 21st.dev vertical spring slide: active word sits at y:0, older words
-  // get pushed up (-150), newer ones wait below (+150). Swap every 2s.
+function CyclingTextEffect({ words }: { words: string[] }) {
+  // One-shot delay before the cycle begins. Holds the cycle quiet while
+  // the page-level intro fade-in plays so the two animations don't fight
+  // for attention. The width-reserving ghost stays mounted throughout so
+  // the surrounding "of [word]" line still reserves correct space — only
+  // the morphing word itself is gated on this timer.
+  const START_DELAY_MS = 1500
   const HOLD_MS = 2000
+  const FADE_MS = 100
 
+  const [started, setStarted] = useState(false)
   const [index, setIndex] = useState(0)
-  const memoWords = useMemo(() => words, [words])
+  const [visible, setVisible] = useState(true)
+  const longest = words.reduce((a, b) => (b.length > a.length ? b : a), '')
+
+  // One-shot: flip `started` true after the intro fade window. Cleanup
+  // handles unmount and React 19 strict-mode double-effect cleanly.
+  useEffect(() => {
+    const t = window.setTimeout(() => setStarted(true), START_DELAY_MS)
+    return () => window.clearTimeout(t)
+  }, [])
 
   useEffect(() => {
+    // Don't schedule anything until the intro delay has elapsed.
+    if (!started) return
+    if (visible) {
+      // Word is showing — wait HOLD_MS, then start the fade-out.
+      const t = window.setTimeout(() => setVisible(false), HOLD_MS)
+      return () => window.clearTimeout(t)
+    }
+    // Word is faded out — wait FADE_MS for the opacity transition to
+    // finish, then advance to the next word and fade back in.
     const t = window.setTimeout(() => {
-      setIndex((n) => (n === memoWords.length - 1 ? 0 : n + 1))
-    }, HOLD_MS)
-    return () => clearTimeout(t)
-  }, [index, memoWords])
-
-  const longest = memoWords.reduce((a, b) => (b.length > a.length ? b : a), '')
+      setIndex((i) => (i + 1) % words.length)
+      setVisible(true)
+    }, FADE_MS)
+    return () => window.clearTimeout(t)
+  }, [started, visible, words.length])
 
   return (
-    <span className="relative inline-block text-left align-baseline">
-      {/* Invisible ghost reserves width of the longest word so the
-          containing line doesn't reflow as words swap. */}
-      <span aria-hidden className="invisible whitespace-pre">
+    <span className="relative inline-block whitespace-pre align-baseline font-medium text-white">
+      {/* Ghost — invisible, reserves width of the longest word so the
+          centered "of [word]" line never reflows mid-transition. */}
+      <span aria-hidden className="invisible">
         {longest}
       </span>
-      {/* SR announces the full word once per swap; animated words are
-          aria-hidden so assistive tech doesn't read the slide sequence. */}
+      {/* SR-friendly: the live region announces each word once on change.
+          The animated chars inside TextEffect are aria-hidden, so AT
+          doesn't read the per-letter blur sequence. Stays empty until
+          `started` so screen readers don't announce the placeholder
+          word during the intro delay. */}
       <span className="sr-only" aria-live="polite" aria-atomic="true">
-        {memoWords[index]}
+        {started ? words[index] : ''}
       </span>
-      {memoWords.map((word, i) => {
-        const isActive = index === i
-        return (
-          <motion.span
-            key={i}
-            aria-hidden
-            className="absolute left-0 top-0 whitespace-pre font-medium text-white"
-            initial={{ opacity: 0, y: '-100' }}
-            // Split per-property transitions: opacity crossfades fast (220ms)
-            // so outgoing and incoming words don't ghost-overlap mid-swap,
-            // while y keeps the spring slide for character. Incoming opacity
-            // delays slightly so outgoing finishes fading before the new
-            // word peaks — removes the "both visible at once" sliver.
-            transition={{
-              y: { type: 'spring', stiffness: 80, damping: 18 },
-              opacity: isActive
-                ? { duration: 0.18, delay: 0.14, ease: 'easeOut' }
-                : { duration: 0.16, ease: 'easeIn' },
-            }}
-            animate={
-              isActive
-                ? { y: 0, opacity: 1 }
-                : { y: index > i ? -150 : 150, opacity: 0 }
-            }>
-            {word}
-          </motion.span>
-        )
-      })}
+      {/* whitespace-nowrap is load-bearing: TextEffect renders each char
+          as its own inline-block; sub-pixel rounding across 11 boxes can
+          push the total just past the absolute container's shrink-to-fit
+          width (= ghost width), wrapping the trailing 'g' onto a second
+          line. nowrap forces single-line layout — any micro-overflow stays
+          invisible because the ghost already reserved comfortable width. */}
+      <span
+        className="absolute left-0 top-0 inline-block whitespace-nowrap transition-opacity ease-out"
+        style={{
+          opacity: visible ? 1 : 0,
+          transitionDuration: `${FADE_MS}ms`,
+        }}
+      >
+        {/* Gated mount: TextEffect only mounts after START_DELAY_MS so
+            the first word's blur-in doesn't race the page intro fade. */}
+        {started && (
+          <TextEffect key={index} per="char" preset="blur" as="span">
+            {words[index]}
+          </TextEffect>
+        )}
+      </span>
     </span>
   )
 }
