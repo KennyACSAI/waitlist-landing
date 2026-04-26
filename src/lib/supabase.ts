@@ -11,7 +11,7 @@ if (!url || !anonKey) {
 
 export const supabase = createClient(url, anonKey, {
   auth: {
-    // Landing page is anonymous — no auth session to persist.
+    // Landing page is anonymous -no auth session to persist.
     persistSession: false,
     autoRefreshToken: false,
   },

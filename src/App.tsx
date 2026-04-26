@@ -1,5 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import WaitlistForm from './components/WaitlistForm'
+import { ShimmerText } from './components/ui/shimmer-text'
 import { TextEffect } from './components/ui/text-effect'
 import type { PinMeasurement } from './three/YoovaPin'
 
@@ -13,7 +15,7 @@ const FOV_DEG = 55
 const VISIBLE_WORLD_H = 2 * CAM_Z * Math.tan((FOV_DEG * Math.PI) / 360)
 
 // ============================================================================
-// PC GAP SINGLE-KNOB — changes ALL FOUR gaps in lockstep on desktop (≥640px).
+// PC GAP SINGLE-KNOB -changes ALL FOUR gaps in lockstep on desktop (≥640px).
 //   header → [A] → headline → [B] → pins → [C] → form → [D] → footer
 // Edit this one number and every PC gap resizes by the same amount, so the
 // four distances stay mathematically equal without hand-syncing four
@@ -24,26 +26,26 @@ const VISIBLE_WORLD_H = 2 * CAM_Z * Math.tan((FOV_DEG * Math.PI) / 360)
 const PC_SPACER_FLEX = 10
 
 // ============================================================================
-// MAP BACKDROP TUNING — Rome map layer (z-0). Two sets of knobs: one for
+// MAP BACKDROP TUNING -Rome map layer (z-0). Two sets of knobs: one for
 // desktop, one for mobile (≤640px). Edit either object and hot reload picks
 // it up instantly. All four controls work together; start with `size`, then
 // `position`, then `opacity`, then optionally `filter`.
 //
-//   size     — 'cover' | 'contain' | '100%' | '150%' | '200%' | '200% auto'
+//   size     -'cover' | 'contain' | '100%' | '150%' | '200%' | '200% auto'
 //              Higher % = zoomed IN more, less of the map shows per viewport.
 //              'cover'   fills viewport, may crop edges
 //              'contain' shows whole image, may leave bands
 //              '200%'    = 2x zoom relative to viewport width
 //              '200% auto' = width 2x, height scales proportionally
 //
-//   position — 'center' | '50% 50%' | '30% 70%' | 'center 40%' | 'left top'
+//   position -'center' | '50% 50%' | '30% 70%' | 'center 40%' | 'left top'
 //              First value = horizontal, second = vertical.
 //              0% = left/top edge, 100% = right/bottom edge.
 //              Change this to shift which part of Rome sits behind the pin.
 //
-//   opacity  — 0 invisible → 1 fully visible. Current values keep it subtle.
+//   opacity  -0 invisible → 1 fully visible. Current values keep it subtle.
 //
-//   filter   — '' (empty = no filter) OR a CSS filter string such as
+//   filter   -'' (empty = no filter) OR a CSS filter string such as
 //              'brightness(0.9) contrast(1.15) saturate(0.85)'
 //              brightness < 1 darkens, contrast > 1 punches, saturate 0 = gray
 // ============================================================================
@@ -70,15 +72,23 @@ const MAP_TUNING = {
 /**
  * Layer stacking (back → front):
  *   z-0  Giant YOOVA serif wordmark, sits just beneath the header
- *   z-1  R3F Canvas — big teal pin in front, canvas transparent so the
+ *   z-1  R3F Canvas -big teal pin in front, canvas transparent so the
  *        serif reads around the pin silhouette
  *   z-2  Subtle noise grain
  *   z-3  Top + bottom vignette gradients for edge falloff
- *   z-10 Main content column — body copy + form
+ *   z-10 Main content column -body copy + form
  *   z-20 Header nav + footer
  */
 export default function App() {
   const pinPlaceholderRef = useRef<HTMLDivElement>(null)
+  // The form is lifted to position:fixed so it stays visible across the
+  // scroll, but its slot is preserved as a placeholder div in the flex
+  // column. We measure the placeholder's screen position after layout
+  // settles and pin the fixed form on top of it -keeps the form at the
+  // SAME vertical position it occupied in the original single-screen
+  // layout, regardless of viewport height or device safe-area insets.
+  const formPlaceholderRef = useRef<HTMLDivElement>(null)
+  const [formFixedTop, setFormFixedTop] = useState<number | null>(null)
   const [pinMeasurement, setPinMeasurement] = useState<PinMeasurement | null>(null)
   const [pinScreenH, setPinScreenH] = useState(() =>
     typeof window !== 'undefined' ? Math.round(window.innerHeight * 0.35) : 300,
@@ -87,12 +97,12 @@ export default function App() {
 
   // Form status is lifted here so the social-proof line under the pill can
   // fade out when the absolute-positioned status message ("You're on the
-  // list…") appears — otherwise they stack on the same Y and the success
+  // list…") appears -otherwise they stack on the same Y and the success
   // message reads as overlapping the scarcity text.
   const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const showSocialProof = formStatus === 'idle' || formStatus === 'loading'
 
-  // Reactive mobile check for MAP_TUNING — re-fires on rotate/resize so the
+  // Reactive mobile check for MAP_TUNING -re-fires on rotate/resize so the
   // map swaps between desktop/mobile values when a tablet flips orientation.
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches,
@@ -125,7 +135,7 @@ export default function App() {
   const [headlineDelta, setHeadlineDelta] = useState(0)
   // Single starting scale. The CSS transition on .intro-headline carries
   // it smoothly down to 1 over the FULL intro duration (fade-in + hold +
-  // glide) — no intermediate stop. That eliminates the abrupt transition
+  // glide) -no intermediate stop. That eliminates the abrupt transition
   // feeling that a two-stage scale (pending→enter→done) produced: the
   // text is always shrinking, so the hold period is purely a translate
   // delay, not a velocity-zero pause.
@@ -153,7 +163,7 @@ export default function App() {
     const targetCenterY = window.innerHeight / 2
     setHeadlineDelta(targetCenterY - currentCenterY)
     // Fit-to-88%-width is the soft cap. Floor at 1.6 so the shrink
-    // motion is always visible — on narrow phones the resting headline
+    // motion is always visible -on narrow phones the resting headline
     // already fills most of the width, which collapsed start-scale to
     // ~1 and killed the animation. html/body overflow-x: hidden
     // (index.css) contains the transient horizontal overflow while the
@@ -165,11 +175,11 @@ export default function App() {
     // next animation frame rather than flipped synchronously. React
     // batches setState calls inside useLayoutEffect and flushes them
     // before the browser paints, so if introReady flipped here it
-    // would commit to DOM in the SAME paint as the pending state —
+    // would commit to DOM in the SAME paint as the pending state,
     // meaning no "before" paint for the transition to interpolate
     // from. Chrome/Safari tolerate this (they fire transitions on
     // computed-style changes even without intervening paints). Yandex
-    // and some Chromium forks don't — they need the pending state
+    // and some Chromium forks don't -they need the pending state
     // painted at least once. Deferring via double rAF guarantees that.
     let rafA = 0
     let rafB = 0
@@ -183,7 +193,7 @@ export default function App() {
         // starts gliding up. The h1's scale transition (2500ms total on
         // .intro-headline in index.css) keeps running through this flip,
         // so the text is still actively shrinking as the glide kicks in.
-        // No stop-start — scale carries continuous motion across the
+        // No stop-start -scale carries continuous motion across the
         // hold/glide boundary, so translate starting doesn't feel abrupt.
         timer = window.setTimeout(() => {
           setIntroDone(true)
@@ -209,11 +219,11 @@ export default function App() {
   }, [])
 
   // Re-measure headlineDelta whenever the flex layout might have shifted
-  // (pin finishing load, window resize) — but only while the intro is in
+  // (pin finishing load, window resize) -but only while the intro is in
   // its enter phase, where the wrapper's translate transition is disabled
   // so these updates land instantly without smear-animating. We clear the
   // WRAPPER's transform (the translate) to read the resting Y, then
-  // restore it. The inner h1's scale is preserved — scale around
+  // restore it. The inner h1's scale is preserved -scale around
   // transform-origin 'center center' doesn't shift the element's own
   // center, so a scaled h1 still reports the correct center Y.
   useLayoutEffect(() => {
@@ -238,14 +248,14 @@ export default function App() {
   // placeholder reserves exactly the same vertical space.
   //
   // Gated on !introDone: pinScreenH can update during the fade-in /
-  // hold phase (when the wrapper's translate transition is disabled —
+  // hold phase (when the wrapper's translate transition is disabled,
   // the re-measure effect above picks up the resulting flex layout
   // shift and snaps delta to the new resting spot instantly). Once
   // introDone flips, pinScreenH freezes: the glide is in motion and
   // any spacer redistribution would move the landing target mid-flight
   // → visible jump. Because the freeze happens BEFORE the glide
   // rather than 1.6s after it, the post-landing "stretching" layout
-  // shift is gone — layout is final by the time the text arrives at
+  // shift is gone -layout is final by the time the text arrives at
   // its resting position.
   useLayoutEffect(() => {
     if (!pinMeasurement) return
@@ -254,7 +264,7 @@ export default function App() {
     setPinScreenH(ph)
   }, [pinMeasurement, introDone])
 
-  // Resize handling runs independently of the intro gate — once
+  // Resize handling runs independently of the intro gate -once
   // pinMeasurement exists, window resizes always update pinScreenH so
   // the placeholder tracks viewport changes even after the intro is
   // done. (Resize during the 1.6s glide itself is vanishingly rare and
@@ -274,10 +284,24 @@ export default function App() {
   // the pin's 3D Y so its bbox center lands at the placeholder's center.
   // Flex-grow spacers around the placeholder are what enforce the four equal
   // gaps; this effect just keeps the 3D pin docked to the DOM slot.
+  //
+  // FIX A: removed `ro.observe(document.body)`. Body-level size changes
+  // (e.g. mobile dvh adjustments when the browser hides chrome on a swipe
+  // gesture, scrollbar visibility changes on desktop) were firing the
+  // recompute mid-scroll, shifting pinPositionY underneath the running
+  // pin animation - perceived as the pins drifting to "random Z positions"
+  // on rebuild. We only observe the placeholder itself now.
+  //
+  // FIX B: recompute is a no-op while scrollProgressRef > 0 (animation
+  // mid-flight). Even if the placeholder somehow resizes during the
+  // pin exit/return animation, pinPositionY stays locked. After the
+  // animation returns to 0, any pending recomputes can run again.
   useLayoutEffect(() => {
     if (!pinMeasurement) return
     let raf = 0
     const recompute = () => {
+      // Lock pinPositionY during scroll so the pin doesn't drift mid-rebuild.
+      if (scrollProgressRef.current > 0) return
       const el = pinPlaceholderRef.current
       if (!el) return
       const rect = el.getBoundingClientRect()
@@ -294,7 +318,6 @@ export default function App() {
     }
     schedule()
     const ro = new ResizeObserver(schedule)
-    ro.observe(document.body)
     if (pinPlaceholderRef.current) ro.observe(pinPlaceholderRef.current)
     window.addEventListener('resize', schedule)
     return () => {
@@ -304,13 +327,200 @@ export default function App() {
     }
   }, [pinMeasurement, pinScreenH])
 
+  // Measure the form placeholder's screen position so we can pin the
+  // fixed-position form on top of it. Re-runs whenever pinScreenH changes
+  // (which shifts the surrounding flex slots) AND on window resize.
+  //
+  // FIX A: removed `ro.observe(document.body)` - body-level resize events
+  // would trigger a state update (setFormFixedTop), causing App re-renders
+  // mid-scroll that compounded the pin-rebuild bug.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = formPlaceholderRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      setFormFixedTop(rect.top)
+    }
+    let raf = 0
+    const schedule = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(measure)
+    }
+    schedule()
+    const ro = new ResizeObserver(schedule)
+    if (formPlaceholderRef.current) ro.observe(formPlaceholderRef.current)
+    window.addEventListener('resize', schedule)
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+      window.removeEventListener('resize', schedule)
+    }
+  }, [pinScreenH])
+
+  // ============================================================================
+  // TRIGGER-BASED ANIMATION (replaces the controllable scroll-driven
+  // version). Wheel/touch direction TOGGLES a boolean (`isExpanded`); the
+  // animation runs to completion on its own clock - the user just nudges
+  // direction, they don't drive each frame. Eliminates partial-scroll
+  // edge cases (pin frozen halfway, side pin still in view, etc.).
+  //
+  // scrollProgressRef is animated 0→1 (or 1→0) over the appropriate
+  // direction-specific duration via requestAnimationFrame, ease-out
+  // cubic. HeroScene's useFrame reads the
+  // ref unchanged. Page-2 reveal/hide is triggered inside the rAF the
+  // instant the ref crosses PAGE2_REVEAL_PROGRESS - guarantees pins are
+  // fully off-screen before page 2 appears.
+  // ============================================================================
+  // Separate durations per direction. The rAF effect picks one based on
+  // isExpanded:
+  //   isExpanded true  (scroll DOWN, pins exit + page 2 reveal) → DOWN
+  //   isExpanded false (scroll UP,   pins rebuild + headline returns) → UP
+  // The headline opacity rides the same rAF clock as the pins, so it
+  // always tracks whichever direction is currently playing - no
+  // separate tuning needed.
+  const ANIM_DURATION_DOWN_MS = 2000
+  const ANIM_DURATION_UP_MS = 1000
+  const PAGE2_REVEAL_PROGRESS = 0.4
+  const WHEEL_TRIGGER_THRESHOLD = 5
+  const TOUCH_TRIGGER_THRESHOLD = 20
+
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [showPage2, setShowPage2] = useState(false)
+  // Mirror state into refs so the global wheel/touch listeners (bound
+  // once after intro) can read latest values without re-binding on every
+  // toggle.
+  const isExpandedRef = useRef(false)
+  useEffect(() => {
+    isExpandedRef.current = isExpanded
+  }, [isExpanded])
+
+  // Live animated value read by HeroScene's useFrame each frame. Driven
+  // by the rAF loop in the isExpanded effect below - no React renders
+  // per frame.
+  const scrollProgressRef = useRef(0)
+  // Ref to the headline section so the rAF loop can drive its opacity
+  // each frame off the SAME value as the pin animation. Without this,
+  // headline opacity ran on its own CSS transition timer and finished
+  // ahead of the pin re-entry on scroll-up - "header text appears much
+  // faster than the pins". Now they're locked in lockstep.
+  const headlineSectionRef = useRef<HTMLElement | null>(null)
+
+  // Body scroll lock: ALWAYS locked. The page is 100dvh and page 2 is an
+  // overlay - there's nothing to scroll to, ever. Wheel/touch drive the
+  // trigger animation directly.
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [])
+
+  // Wheel + touch event handlers. Bound ONCE after intro completes
+  // (isExpanded read via ref, never re-bound). Each event is a
+  // directional nudge: down past threshold = expand, up = collapse.
+  useEffect(() => {
+    if (!introDone) return
+
+    const touchStartYRef = { current: 0 }
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      if (e.deltaY > WHEEL_TRIGGER_THRESHOLD && !isExpandedRef.current) {
+        setIsExpanded(true)
+      } else if (e.deltaY < -WHEEL_TRIGGER_THRESHOLD && isExpandedRef.current) {
+        setIsExpanded(false)
+      }
+    }
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartYRef.current = e.touches[0]?.clientY ?? 0
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const startY = touchStartYRef.current
+      if (!startY) return
+      const currentY = e.touches[0]?.clientY ?? 0
+      const deltaY = startY - currentY
+      e.preventDefault()
+      if (deltaY > TOUCH_TRIGGER_THRESHOLD && !isExpandedRef.current) {
+        setIsExpanded(true)
+        touchStartYRef.current = currentY
+      } else if (deltaY < -TOUCH_TRIGGER_THRESHOLD && isExpandedRef.current) {
+        setIsExpanded(false)
+        touchStartYRef.current = currentY
+      }
+    }
+
+    const handleTouchEnd = () => {
+      touchStartYRef.current = 0
+    }
+
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    window.addEventListener('touchstart', handleTouchStart, { passive: false })
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend', handleTouchEnd)
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel)
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [introDone])
+
+  // Time-based animation of scrollProgressRef. Runs whenever isExpanded
+  // flips - eases from current ref value toward new target (1 or 0)
+  // over the direction-specific duration (DOWN for exit, UP for
+  // rebuild). Mid-animation reversal works naturally because we always
+  // start from the CURRENT ref value, not from 0/1, and pick up the
+  // duration matching the new direction.
+  // Toggles showPage2 the instant the ref crosses PAGE2_REVEAL_PROGRESS.
+  // ALSO drives the headline section's opacity from the SAME value -
+  // headline reaches opacity 0 at exactly the moment pins are fully
+  // out (scrollProgressRef = PAGE2_REVEAL_PROGRESS), reaches opacity 1
+  // at exactly the moment pins are fully back at rest. No drift between
+  // the headline fade and the pin animation, ever.
+  useEffect(() => {
+    if (!introDone) return
+    const target = isExpanded ? 1 : 0
+    const duration = isExpanded ? ANIM_DURATION_DOWN_MS : ANIM_DURATION_UP_MS
+    const from = scrollProgressRef.current
+    const startTime = performance.now()
+    let raf = 0
+    let crossed = from >= PAGE2_REVEAL_PROGRESS
+    const step = (now: number) => {
+      const elapsed = now - startTime
+      const t = Math.min(1, elapsed / duration)
+      const eased = 1 - Math.pow(1 - t, 3)
+      const value = from + (target - from) * eased
+      scrollProgressRef.current = value
+      // Headline opacity tied 1:1 to the same animated value - reaches 0
+      // when pins are fully out (value >= PAGE2_REVEAL_PROGRESS), 1 when
+      // value = 0. Direct DOM write avoids React renders per frame.
+      if (headlineSectionRef.current) {
+        const opacity = Math.max(0, 1 - value / PAGE2_REVEAL_PROGRESS)
+        headlineSectionRef.current.style.opacity = String(opacity)
+      }
+      const aboveThreshold = value >= PAGE2_REVEAL_PROGRESS
+      if (aboveThreshold !== crossed) {
+        crossed = aboveThreshold
+        setShowPage2(aboveThreshold)
+      }
+      if (t < 1) {
+        raf = requestAnimationFrame(step)
+      }
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [isExpanded, introDone])
+
   const introState = introReady ? (introDone ? 'done' : 'enter') : 'pending'
   // Split into two transforms so translate and scale can run on different
   // timelines. Wrapper carries translate: held at delta during pending/
   // enter, glides to 0 over 1600ms during done. H1 carries scale: fixed
   // at headlineStartScale during pending, transitions to 1 over the full
   // 2500ms intro duration as soon as introReady flips. There's no
-  // intermediate scale value — the scale motion is one single continuous
+  // intermediate scale value -the scale motion is one single continuous
   // ease from "oversized" to "final", which crosses the hold→glide
   // boundary without stopping, keeping the overall motion smooth.
   const headlineWrapTransform = introGlideStarted
@@ -321,12 +531,16 @@ export default function App() {
   return (
     <div
       data-intro={introState}
-      className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden bg-ink-950 font-sans"
-      style={{ '--pc-spacer-flex': String(PC_SPACER_FLEX) } as CSSProperties}>
-      {/* Layer 0 — faint Rome street map backdrop.
-          All tunable values live in MAP_TUNING at the top of this file.
-          Edit MAP_TUNING.desktop for ≥640px viewports, MAP_TUNING.mobile
-          for phones. Values below are just plumbing. */}
+      className="relative w-full overflow-hidden bg-ink-950 font-sans"
+      style={{
+        '--pc-spacer-flex': String(PC_SPACER_FLEX),
+        // Page is exactly 100dvh -no document scroll. Wheel/touch drive
+        // a virtual scrollProgress that animates pins out of the scene
+        // and reveals page-2 content as a fixed-position overlay.
+        minHeight: '100dvh',
+      } as CSSProperties}>
+      {/* Layer 0 -faint Rome street map backdrop.
+          All tunable values live in MAP_TUNING at the top of this file. */}
       <div aria-hidden className="intro-fade pointer-events-none fixed inset-0 z-0">
         <div
           className="h-full w-full"
@@ -340,17 +554,22 @@ export default function App() {
         />
       </div>
 
-      {/* Layer 1 — 3D pin + starfield */}
+      {/* Layer 1 -3D pin + starfield. scrollProgressRef drives the pin's
+          scroll-zoom inside HeroScene's useFrame (no React re-renders). */}
       <div className="intro-fade pointer-events-none fixed inset-0 z-[1]">
         <Suspense fallback={null}>
-          <HeroScene pinPositionY={pinPositionY} onPinMeasured={handlePinMeasured} />
+          <HeroScene
+            pinPositionY={pinPositionY}
+            onPinMeasured={handlePinMeasured}
+            scrollProgressRef={scrollProgressRef}
+          />
         </Suspense>
       </div>
 
-      {/* Layer 2 — noise */}
+      {/* Layer 2 -noise */}
       <div className="intro-fade noise pointer-events-none fixed inset-0 z-[2]" />
 
-      {/* Layer 3 — edge vignettes */}
+      {/* Layer 3 -edge vignettes */}
       <div
         aria-hidden
         className="intro-fade pointer-events-none fixed inset-x-0 top-0 z-[3] h-24 bg-gradient-to-b from-ink-950/70 to-transparent sm:h-32"
@@ -360,16 +579,11 @@ export default function App() {
         className="intro-fade pointer-events-none fixed inset-x-0 bottom-0 z-[3] h-40 bg-gradient-to-t from-ink-950/85 to-transparent sm:h-56"
       />
 
-      {/* Header — edge-to-edge liquid-glass bar. Visibility-gated (NOT
-          opacity-faded) for the same reason as the form in <main>: any
-          ancestor with opacity < 1 kills the backdrop-filter in iOS Safari
-          and some Chromium forks, so the glass would disappear for the
-          whole 1400ms fade and snap back. Visibility toggle sidesteps that
-          — the bar either isn't rendered or is fully composited with a
-          correct backdrop-filter. Snaps in on introGlideStarted, same
-          beat as the form. */}
+      {/* Header -lifted from flex column to fixed top so it stays
+          pinned through the whole scroll. Visibility (not opacity) gated
+          for the iOS Safari backdrop-filter quirk noted on the form. */}
       <header
-        className="intro-reveal-header relative z-20"
+        className="intro-reveal-header fixed inset-x-0 top-0 z-20"
         style={{ visibility: introGlideStarted ? 'visible' : 'hidden' }}>
         <div className="liquid-glass-apple liquid-glass-apple--edge-bottom w-full items-center">
           <div aria-hidden className="liquid-glass-apple__effect" />
@@ -386,7 +600,7 @@ export default function App() {
             <a
               href="#"
               onClick={(e) => e.preventDefault()}
-              aria-label="Yoova — home"
+              aria-label="Yoova, home"
               className="inline-flex min-h-11 items-center gap-2 rounded-full px-1 sm:gap-2.5 sm:px-2">
               <YoovaLogoMark />
               <span
@@ -417,97 +631,141 @@ export default function App() {
         </div>
       </header>
 
-      {/*
-       * Four flex-grow spacers distribute free vertical space between:
-       *   header → [A] → headline → [B] → pin slot → [C] → form → [D] → footer
-       * The pin slot is an invisible placeholder whose height matches the
-       * pin's projected on-screen footprint; a layout effect pushes the 3D
-       * pin to the placeholder's center so the visible pin sits inside it.
-       *
-       * VERTICAL LAYOUT TUNING — change the flex-[N] values on each spacer
-       * below to shift the headline, pins, and form up or down:
-       *   Bigger spacer B (headline → pin) = pins and form sit LOWER
-       *   Smaller spacer D (form → footer) = frees the space that B claimed
-       *   Bigger spacer C (pin → form) = form sits lower without moving pins
-       *   Bigger spacer A (header → headline) = whole stack shifts down
-       * Currently weighted 1 : 1.8 : 1 : 0.5 so the pins + form hang lower
-       * than the visual midpoint. Flip back to all `flex-1` for the old
-       * evenly-spaced layout.
-       */}
-      {/* Spacer A — header → headline.
-          Mobile: flex-1. Desktop: pulled from PC_SPACER_FLEX at the top of
-          this file via the `pc-spacer-equal` class + CSS variable, so all
-          four spacers share one knob. */}
-      <div aria-hidden className="pc-spacer-equal relative z-10 min-h-0 flex-1" />
-
-      <section className="relative z-10 flex flex-col items-center px-5 text-center">
+      {/* PAGE 1 -hero. The flex layout matches the original 100dvh
+          layout exactly. Header/form/footer are lifted to fixed-position
+          siblings (so they remain reachable through scroll), but their
+          original slots in the flex column are preserved as PLACEHOLDERS
+          with matching heights -that way the spacer math is unchanged
+          and the headline + pin land at the same vertical positions they
+          did in the old single-screen design. */}
+      <div className="relative z-10 flex h-[100dvh] w-full flex-col overflow-hidden">
+        {/* Header placeholder -reserves the vertical space the lifted
+            header occupies, including iOS notch safe-area inset. */}
         <div
-          ref={headlineWrapRef}
-          className="intro-headline-wrap mb-3"
-          style={{
-            transform: headlineWrapTransform,
-            willChange: 'transform',
-          }}>
-          <h1
-            ref={headlineRef}
-            className="intro-headline text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl md:text-7xl"
+          aria-hidden
+          className="relative z-10 w-full shrink-0"
+          style={{ minHeight: 'calc(env(safe-area-inset-top, 0px) + 3.5rem)' }}
+        />
+
+        {/* Spacer A -header → headline. */}
+        <div aria-hidden className="pc-spacer-equal relative z-10 min-h-0 flex-1" />
+
+        {/* Headline + cycling word. Fades out as scrollProgress climbs
+            so it doesn't crowd the screen as the pins reverse-exit. */}
+        <section
+          ref={headlineSectionRef}
+          className="relative z-10 flex flex-col items-center px-5 text-center"
+          style={{ opacity: 1 }}>
+          <div
+            ref={headlineWrapRef}
+            className="intro-headline-wrap mb-3"
             style={{
-              transform: `scale(${currentHeadlineScale})`,
-              transformOrigin: 'center center',
-              willChange: 'transform, opacity',
+              transform: headlineWrapTransform,
+              willChange: 'transform',
             }}>
-            <span className="font-bold">Your</span>{' '}
-            <span className="italic font-light">New</span>{' '}
-            <span className="font-bold">Verse</span>
-          </h1>
-        </div>
-        <p className="intro-fade-up flex items-baseline justify-center gap-2 text-2xl font-light leading-tight text-zinc-200 sm:gap-3 sm:text-4xl md:text-5xl">
-          <span className="text-zinc-400">of</span>
-          <CyclingTextEffect words={['Socializing', 'Discovering', 'Connecting']} />
-        </p>
-      </section>
+            <h1
+              ref={headlineRef}
+              className="intro-headline text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl md:text-7xl"
+              style={{
+                transform: `scale(${currentHeadlineScale})`,
+                transformOrigin: 'center center',
+                willChange: 'transform, opacity',
+              }}>
+              <span className="font-bold">Your</span>{' '}
+              <span className="italic font-light">New</span>{' '}
+              <span className="font-bold">Verse</span>
+            </h1>
+          </div>
+          <p className="intro-fade-up flex items-baseline justify-center gap-2 text-2xl font-light leading-tight text-zinc-200 sm:gap-3 sm:text-4xl md:text-5xl">
+            <span className="text-zinc-400">of</span>
+            <CyclingTextEffect words={['Socializing', 'Discovering', 'Connecting']} />
+          </p>
+        </section>
 
-      {/* Spacer B — headline → pin slot.
-          Shares PC_SPACER_FLEX via `pc-spacer-equal`. */}
-      <div aria-hidden className="pc-spacer-equal relative z-10 min-h-0 flex-1" />
+        {/* Spacer B -headline → pin slot. */}
+        <div aria-hidden className="pc-spacer-equal relative z-10 min-h-0 flex-1" />
 
-      <div
-        ref={pinPlaceholderRef}
-        aria-hidden
-        className="pin-placeholder relative z-10 w-full shrink-0"
-        style={{ height: `${pinScreenH}px` }}
-      />
+        <div
+          ref={pinPlaceholderRef}
+          aria-hidden
+          className="pin-placeholder relative z-10 w-full shrink-0"
+          style={{ height: `${pinScreenH}px` }}
+        />
 
-      {/* Spacer C — pin slot → form.
-          Shares PC_SPACER_FLEX via `pc-spacer-equal`. */}
-      <div aria-hidden className="pc-spacer-equal relative z-10 min-h-0 flex-1" />
+        {/* Spacer C -pin slot → form slot. */}
+        <div aria-hidden className="pc-spacer-equal relative z-10 min-h-0 flex-1" />
 
-      {/* NO intro-fade on main. The form's .liquid-glass-apple uses
-          backdrop-filter (blur + SVG distortion) and ANY ancestor with
-          opacity < 1 causes iOS Safari and some Chromium forks to
-          either skip the filter entirely or render it at drastically
-          reduced precision — the visible symptom is the glass effect
-          disappearing for the full 1400ms fade and snapping back at
-          the end. Gate the form via visibility instead: it's either
-          fully excluded from rendering (hidden) or fully composited
-          with correct backdrop-filter (visible). No intermediate
-          ancestor-opacity state, no bug. Snaps in as the headline
-          starts gliding up, which reads as a natural reveal. */}
+        {/* Form placeholder -reserves the vertical space the lifted
+            waitlist form occupies. We measure this slot's screen position
+            after layout settles and pin the fixed-position form on top of
+            it (see formFixedTop state below). */}
+        <div
+          ref={formPlaceholderRef}
+          aria-hidden
+          className="relative z-10 w-full shrink-0"
+          style={{ minHeight: '6.25rem' }}
+        />
+
+        {/* Spacer D -form slot → footer. Same flex weights as the
+            original layout (mobile flex-[0.5], PC pc-spacer-equal). */}
+        <div aria-hidden className="pc-spacer-equal relative z-10 min-h-0 flex-[0.5]" />
+
+        {/* Footer placeholder -reserves the lifted footer's vertical
+            space, including iOS bottom safe-area inset. */}
+        <div
+          aria-hidden
+          className="relative z-10 w-full shrink-0"
+          style={{ minHeight: 'calc(env(safe-area-inset-bottom, 0px) + 3.5rem)' }}
+        />
+      </div>
+
+      {/* PAGE 2 -"How Yoova Works" overlay. Fixed-positioned so it sits
+          ON TOP of the hero in the same viewport (no document scroll).
+          The fixed band sits between the header (top) and the form
+          (which is at formFixedTop) -content is centered in that band.
+          Hidden until scrollProgress crosses 0.95 (pins fully out), then
+          AnimatePresence triggers a blur+slide-up spring stagger. */}
+      <AnimatePresence>
+        {showPage2 && (
+          <motion.section
+            key="page2-overlay"
+            className="pointer-events-none fixed inset-x-0 z-10 flex items-center justify-center px-5"
+            style={{
+              top: 'calc(env(safe-area-inset-top, 0px) + 4rem)',
+              // Stop just above the fixed form -bottom is computed from
+              // formFixedTop with a small gap. Falls back to 38vh until
+              // the form's position is measured.
+              bottom: formFixedTop !== null
+                ? `calc(100vh - ${formFixedTop}px + 1rem)`
+                : '38vh',
+            }}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={page2ContainerVariants}>
+            <HowYoovaWorks />
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* Form -lifted to fixed-positioned center so it persists across
+          the whole scroll. The user can type their email at any scroll
+          position. The fixed `top` is driven by formFixedTop, which is
+          measured from the placeholder slot inside the flex column,
+          this pins the form at the SAME vertical position it occupied in
+          the original single-screen layout. Falls back to 65vh until
+          measurement completes (one-frame fallback, then snaps in).
+          NO intro-fade ancestor: form's liquid-glass uses backdrop-filter
+          which iOS Safari + some Chromium forks break when any ancestor
+          has opacity < 1. Visibility-gated instead. */}
       <main
-        className="intro-reveal-form relative z-10 flex w-full flex-col items-center px-5"
-        style={{ visibility: introGlideStarted ? 'visible' : 'hidden' }}>
+        className="intro-reveal-form fixed inset-x-0 z-30 flex w-full flex-col items-center px-5"
+        style={{
+          top: formFixedTop !== null ? `${formFixedTop}px` : '65vh',
+          visibility: introGlideStarted ? 'visible' : 'hidden',
+        }}>
         <div className="flex w-full max-w-xl flex-col items-center text-center">
           <WaitlistForm variant="hero" onStatusChange={setFormStatus} />
-          {/* Social proof + scarcity line. Edit the two halves independently:
-              left half = scarcity, right half = count. Middle dot ('·') is
-              the editorial separator used elsewhere on the page.
-              Hidden (and its vertical space preserved via opacity-only fade)
-              whenever the form's absolute status message is visible — stops
-              the success/error row from reading as overlapping text. */}
-          {/* Matches the WaitlistForm status message exactly — same top
-              offset (mt-2), same text-sm, same flex-center layout — so the
-              two swap in place pixel-for-pixel. Only color differs (muted
-              white here vs. brand-teal for success, rose for error). */}
           <p
             aria-hidden={!showSocialProof}
             className="mt-2 flex items-center justify-center gap-1.5 text-center text-sm text-white/55 transition-opacity duration-300"
@@ -517,15 +775,10 @@ export default function App() {
         </div>
       </main>
 
-      {/* Spacer D — form → footer.
-          Mobile: flex-[0.5] (tight so the form doesn't float far from the
-                              footer on phones).
-          Desktop: shares PC_SPACER_FLEX via `pc-spacer-equal`. */}
-      <div aria-hidden className="pc-spacer-equal relative z-10 min-h-0 flex-[0.5]" />
-
-      {/* Footer — minimal, editorial */}
+      {/* Footer -lifted from flex column to fixed bottom so it stays
+          anchored throughout the scroll. */}
       <footer
-        className="intro-fade-up relative z-20 flex items-center justify-between px-2 sm:px-5"
+        className="intro-fade-up fixed inset-x-0 bottom-0 z-20 flex items-center justify-between px-2 sm:px-5"
         style={{
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.4rem)',
           paddingLeft: 'max(0.5rem, env(safe-area-inset-left, 0px))',
@@ -550,15 +803,15 @@ export default function App() {
  * trigger + children changes and stuck mid-animation on the second word).
  *
  * Pattern: every cycle remounts a fresh TextEffect via `key={index}`.
- * That guarantees clean state per word — no stale AnimatePresence
+ * That guarantees clean state per word -no stale AnimatePresence
  * snapshots, no half-finished exit animations leaking into the next
  * mount. The visual softness (no hard cut between words) comes from the
  * brief window where show=false fades the previous word out before the
  * new key value mounts the next one in.
  *
  * Cadence (per word):
- *   HOLD_MS — time the word stays fully visible before fading out
- *   FADE_MS — wrapper opacity fade duration; matches the gap before
+ *   HOLD_MS -time the word stays fully visible before fading out
+ *   FADE_MS -wrapper opacity fade duration; matches the gap before
  *             the new word's letters begin their blur-in
  *
  * A hidden ghost of the longest word reserves horizontal width so the
@@ -568,7 +821,7 @@ function CyclingTextEffect({ words }: { words: string[] }) {
   // One-shot delay before the cycle begins. Holds the cycle quiet while
   // the page-level intro fade-in plays so the two animations don't fight
   // for attention. The width-reserving ghost stays mounted throughout so
-  // the surrounding "of [word]" line still reserves correct space — only
+  // the surrounding "of [word]" line still reserves correct space -only
   // the morphing word itself is gated on this timer.
   const START_DELAY_MS = 1500
   const HOLD_MS = 2000
@@ -590,11 +843,11 @@ function CyclingTextEffect({ words }: { words: string[] }) {
     // Don't schedule anything until the intro delay has elapsed.
     if (!started) return
     if (visible) {
-      // Word is showing — wait HOLD_MS, then start the fade-out.
+      // Word is showing -wait HOLD_MS, then start the fade-out.
       const t = window.setTimeout(() => setVisible(false), HOLD_MS)
       return () => window.clearTimeout(t)
     }
-    // Word is faded out — wait FADE_MS for the opacity transition to
+    // Word is faded out -wait FADE_MS for the opacity transition to
     // finish, then advance to the next word and fade back in.
     const t = window.setTimeout(() => {
       setIndex((i) => (i + 1) % words.length)
@@ -605,7 +858,7 @@ function CyclingTextEffect({ words }: { words: string[] }) {
 
   return (
     <span className="relative inline-block whitespace-pre align-baseline font-medium text-white">
-      {/* Ghost — invisible, reserves width of the longest word so the
+      {/* Ghost -invisible, reserves width of the longest word so the
           centered "of [word]" line never reflows mid-transition. */}
       <span aria-hidden className="invisible">
         {longest}
@@ -622,7 +875,7 @@ function CyclingTextEffect({ words }: { words: string[] }) {
           as its own inline-block; sub-pixel rounding across 11 boxes can
           push the total just past the absolute container's shrink-to-fit
           width (= ghost width), wrapping the trailing 'g' onto a second
-          line. nowrap forces single-line layout — any micro-overflow stays
+          line. nowrap forces single-line layout -any micro-overflow stays
           invisible because the ghost already reserved comfortable width. */}
       <span
         className="absolute left-0 top-0 inline-block whitespace-nowrap transition-opacity ease-out"
@@ -644,7 +897,103 @@ function CyclingTextEffect({ words }: { words: string[] }) {
 }
 
 /**
- * Inline vector Yoova mark — stripped of the heavy drop-shadow / inner-shadow
+ * Page-2 content. Renders inside an AnimatePresence overlay; appears
+ * when `showPage2` flips true (scrollProgressRef crosses 0.4, pins are
+ * fully exited). Each item -lead paragraph + 3 step cards -uses the
+ * same blur+slide-up spring variant, container/grid stagger them so
+ * the lead lands first then the steps cascade in.
+ *
+ * Content kept tight per spec: a one-line product summary + 3 numbered
+ * steps. No comparison table, no trust-score teaser, no founders block.
+ */
+// Page 2 entry animation -adapted from the AnimatedGroup blur+slide-up
+// pattern shared by the user. Container staggers items; each item springs
+// in from below with blur fading out. Same variants drive the EXIT (run
+// in reverse) when the user scrolls back up and pins re-enter.
+const page2ContainerVariants: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.05,
+    },
+  },
+}
+
+const page2ItemVariants: Variants = {
+  hidden: {
+    opacity: 0,
+    filter: 'blur(12px)',
+    y: 16,
+  },
+  visible: {
+    opacity: 1,
+    filter: 'blur(0px)',
+    y: 0,
+    transition: {
+      type: 'spring',
+      bounce: 0.3,
+      duration: 0.9,
+    },
+  },
+}
+
+function HowYoovaWorks() {
+  return (
+    <div className="mx-auto w-full max-w-[22rem] text-center sm:max-w-5xl">
+      {/* Single lead - the overall message. Earlier versions had a 3-step
+          card grid below; user requested less info on the second page so
+          it's just the three lines below, all in one style. */}
+      {/* Three lines, identical typography. Inclusive Sans tracked
+          tight, super light weight - reads as editorial poster type
+          rather than UI copy. text-balance keeps wraps clean on the
+          long third line.
+          Shimmer timing knobs (per ShimmerText below):
+            delay       - first shimmer fires after this many seconds
+            duration    - how long ONE shimmer pass takes
+            repeatDelay - gap between consecutive passes (LOWER = MORE
+                          FREQUENT). Currently 1.2s gap. Drop to 0.4-0.6
+                          for nearly-continuous shimmer, raise to 4-5
+                          for slow / occasional. */}
+      <div className="space-y-3 sm:space-y-5 md:space-y-6">
+        {PAGE_2_LINES.map((line, i) => (
+          <motion.div
+            key={i}
+            variants={page2ItemVariants}
+            // text-pretty lets the browser pick natural line breaks
+            // (avoids orphans) WITHOUT forcing the balanced-line wrap
+            // that text-balance does - which was creating awkward
+            // 3-line wraps for the long sentences. leading-[1.35]
+            // sets the line-height the inner ShimmerText inherits.
+            className={`text-pretty text-4xl font-light leading-[1.35] tracking-tight sm:text-4xl md:text-5xl lg:text-6xl${
+              line.italic ? ' italic' : ''
+            }`}>
+            <ShimmerText
+              className="text-white"
+              shimmerColor="#3ec3a7"
+              delay={1 + i * 0.4}
+              duration={1.4}
+              repeatDelay={1}>
+              {line.text}
+            </ShimmerText>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Each line is one continuous string so it wraps as a single text
+// flow (no segment-split = no awkward 3-line wraps from inline-block
+// chains). Italic on imperatives only.
+const PAGE_2_LINES: Array<{ italic: boolean; text: string }> = [
+  { italic: false, text: 'A social map of real events.' },
+  { italic: true, text: 'Show up.' },
+  { italic: true, text: 'Reveal yourself only after meeting.' },
+]
+
+/**
+ * Inline vector Yoova mark -stripped of the heavy drop-shadow / inner-shadow
  * filter stack that the full /logo.svg carries. Mobile browsers (notably
  * iOS Safari and Chrome Android) rasterize <img src="svg"> assets with
  * complex SVG filters at a low internal DPI, which produced visibly blurry

@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 /**
- * Network-graph backdrop — a cloud of drifting *map pin* billboards
+ * Network-graph backdrop -a cloud of drifting *map pin* billboards
  * (camera-facing sprites) with hairlines connecting any two pins whose
  * distance is under LINK_DISTANCE. Reads as a mesh of Yoova pins,
  * echoing the main 3D pin without duplicating heavy glb geometry.
@@ -25,11 +25,11 @@ const PIN_COLOR = '#28aa97'
 // Yoova pin stays sharp. 0 = crisp, ~1.5 = subtle haze, ~3 = strong DOF.
 const BG_PIN_BLUR_PX = 0.5
 // Line brightness multiplier. 1px WebGL lines can't be literally blurred,
-// so we dim them to match the soft pins — they fade into the backdrop
+// so we dim them to match the soft pins -they fade into the backdrop
 // instead of cutting across it. 1 = original, ~0.55 = hazy, ~0.3 = faint.
 const BG_LINE_INTENSITY = 0.45
 
-// Connection lifecycle — trace-on + fade-out. Durations in seconds.
+// Connection lifecycle -trace-on + fade-out. Durations in seconds.
 const FORM_SECONDS = 0.5
 const FADE_SECONDS = 0.7
 // Reduced-motion fallback: no trace, tiny fade.
@@ -37,7 +37,7 @@ const FORM_SECONDS_REDUCED = 0
 const FADE_SECONDS_REDUCED = 0.1
 // Minimum sustain brightness. Without this, lines asymptote to 0 at the
 // link-distance threshold so by the time a pair crosses out of range
-// there's nothing left to fade — the dissolve reads as an instant pop.
+// there's nothing left to fade -the dissolve reads as an instant pop.
 const SUSTAIN_FLOOR = 0.55
 
 type ConnectionPhase = 'forming' | 'sustain' | 'dissolving'
@@ -46,7 +46,7 @@ interface ConnectionState {
   phase: ConnectionPhase
   /** Seconds elapsed in the current phase. */
   t: number
-  /** Last computed brightness — captured at dissolve start so the fade
+  /** Last computed brightness -captured at dissolve start so the fade
    *  curve starts from the line's visible intensity, not from full. */
   lastBrightness: number
 }
@@ -85,7 +85,7 @@ function drawPinShape(ctx: CanvasRenderingContext2D, size: number) {
  *  iOS Safari < 18 silently ignores `CanvasRenderingContext2D.filter`, so
  *  the CSS `blur(…)` approach produces sharp pins on many phones. To get
  *  cross-browser softness we use a downsample/upsample pass: draw into a
- *  small canvas then scale it up to the final size — bilinear filtering
+ *  small canvas then scale it up to the final size -bilinear filtering
  *  during the upscale gives a smooth box-blur that works everywhere. */
 function buildPinTexture(): THREE.Texture {
   const size = 128
@@ -162,7 +162,7 @@ export default function Starfield() {
   // allocations on the hot path.
   const connectionsRef = useRef<Map<number, ConnectionState> | null>(null)
   if (!connectionsRef.current) connectionsRef.current = new Map()
-  // Reused across frames via .clear() — avoids GC pressure from a new Set
+  // Reused across frames via .clear() -avoids GC pressure from a new Set
   // allocated for every frame's in-range scan.
   const inRangeRef = useRef<Set<number> | null>(null)
   if (!inRangeRef.current) inRangeRef.current = new Set()
@@ -270,7 +270,7 @@ export default function Starfield() {
       let brightness = 0
 
       if (s.phase === 'forming') {
-        // ease-out-quart: confident, refined settle — 1 - (1-t)^4
+        // ease-out-quart: confident, refined settle -1 - (1-t)^4
         const u = formDuration > 0 ? Math.min(1, s.t / formDuration) : 1
         const eased = 1 - Math.pow(1 - u, 4)
         endX = ax + (bx - ax) * eased

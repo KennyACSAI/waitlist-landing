@@ -11,7 +11,7 @@ import {
 /**
  * A soft, drifting, interactive point cloud in the brand color.
  *
- * Interactions (all uniform-driven — zero JS work per particle per frame):
+ * Interactions (all uniform-driven -zero JS work per particle per frame):
  *  - Typing excite: keystrokes in the email input pull particles gently toward
  *    the input box, then release as the envelope decays.
  *  - Pin formation: on successful submit, a subset of particles coalesces
@@ -145,10 +145,10 @@ interface ParticleFieldProps {
  * units) into `out` at index `i`.
  *
  * Layout (readable as the universal "Google Maps" pin):
- *   - HEAD: outlined ring (annulus) with a visible hole — the dot/donut.
+ *   - HEAD: outlined ring (annulus) with a visible hole -the dot/donut.
  *   - NECK: two short tangent lines sweeping down from the ring's lower sides
  *     so the tail visibly connects to the head rather than floating below it.
- *   - TAIL: long triangle tapering to a sharp point — the pointer tip.
+ *   - TAIL: long triangle tapering to a sharp point -the pointer tip.
  *   - TIP : small dense cluster right at the tip for extra punch.
  */
 function sampleTeardrop(out: Float32Array, i: number) {
@@ -159,7 +159,7 @@ function sampleTeardrop(out: Float32Array, i: number) {
   const TAIL_BASE_Y = -0.02
   const TAIL_BASE_HW = 0.14
 
-  // Probability bands — tuned so the ring reads clearly AND the pointer tip
+  // Probability bands -tuned so the ring reads clearly AND the pointer tip
   // has enough density to look like a sharp point rather than a fizzle.
   const r0 = Math.random()
   if (r0 < 0.55) {
@@ -264,7 +264,7 @@ export default function ParticleField({ count = 1500, radius = 6 }: ParticleFiel
     return [positions, scales, seeds, pinIds, pinOffsets, computePinTargets()]
   }, [count, radius])
 
-  // Upload pin targets once — the Vector3 instances inside the uniform persist.
+  // Upload pin targets once -the Vector3 instances inside the uniform persist.
   useEffect(() => {
     if (!matRef.current) return
     const arr = matRef.current.uniforms.uPinTargets.value as THREE.Vector3[]

@@ -43,5 +43,8 @@
       "mcp__supabase__deploy_edge_function",
       "mcp__supabase__get_logs"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }

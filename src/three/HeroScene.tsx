@@ -6,11 +6,11 @@ import YoovaPin, { type PinMeasurement } from './YoovaPin'
 import Starfield from './Starfield'
 
 // ============================================================================
-// PIN INTRO ANIMATION — entrance choreography that mirrors the headline's
+// PIN INTRO ANIMATION -entrance choreography that mirrors the headline's
 // "glide" phase in App.tsx (delay ~900ms after mount, then a 1.6s ease-out
 // travel). Main pin rises from below; side pins sweep in from their world
 // sides (A from the right, B from the left). Orbit rotation is held at 0
-// for the full intro and only begins advancing once progress reaches 1 — so
+// for the full intro and only begins advancing once progress reaches 1 -so
 // the pins finish "docking" before starting to orbit.
 // ============================================================================
 const PIN_INTRO = {
@@ -27,7 +27,7 @@ const PIN_INTRO = {
   mainFromY: -7,
   /** World-X offset magnitude the side pins start at (applied in each pin's
    *  local frame; pin A's local +X = world +X, pin B's local +X = world -X
-   *  because of its 180° phase rotation — so the same positive value puts
+   *  because of its 180° phase rotation -so the same positive value puts
    *  pin A far right and pin B far left, and both slide inward as it
    *  decays to 0). */
   sideFromX: 9,
@@ -35,10 +35,10 @@ const PIN_INTRO = {
 // ============================================================================
 
 // ============================================================================
-// MAIN PIN SIZE — world-unit scale for the big center pin, per viewport.
+// MAIN PIN SIZE -world-unit scale for the big center pin, per viewport.
 // Side pins are sized as a FRACTION of the main pin (see SIDE_PINS below),
 // so changing these values also proportionally changes side pins at the
-// same fraction — the two scenes stay in balance automatically. Edit
+// same fraction -the two scenes stay in balance automatically. Edit
 // sizeMobile to shrink/grow the big pin on phones without affecting desktop.
 // ============================================================================
 const MAIN_PIN = {
@@ -53,7 +53,7 @@ const MAIN_PIN = {
 // ============================================================================
 
 // ============================================================================
-// SIDE PIN CONTROLS — applies to BOTH the left and right orbiting pins.
+// SIDE PIN CONTROLS -applies to BOTH the left and right orbiting pins.
 // Edit any value here and both pins update symmetrically. No other file to
 // touch. Keep units in the comments so tweaks stay predictable.
 // ============================================================================
@@ -65,7 +65,7 @@ const SIDE_PINS = {
   sizeMobile: 0.55,
   /** How far each pin leans outward from vertical, in degrees.
    *  0 = pins stand upright (stacked at main tip, not useful).
-   *  45 = classic cone — heads sweep at equal horizontal + vertical offset.
+   *  45 = classic cone -heads sweep at equal horizontal + vertical offset.
    *  90 = pins lie flat, heads orbit at main-tip height. */
   leanDegrees: 25,
   /** Orbit angular speed in radians per second. Positive = CCW viewed from
@@ -73,7 +73,7 @@ const SIDE_PINS = {
   orbitSpeed: 0.6,
   /** Angular spacing between the two pins around the orbit, in degrees.
    *  180 = opposite sides (default). 120 or 90 spreads them differently
-   *  — note with only two pins the scene reads strangely below ~120°. */
+   *  -note with only two pins the scene reads strangely below ~120°. */
   phaseDegrees: 180,
   /** Vertical shift of the orbit hinge (positive = above main tip, negative
    *  = below). 0 welds tips exactly to the main pin's tip. Useful if the
@@ -92,14 +92,14 @@ const SIDE_PINS = {
   anchorOffsetZ: 0,
   /** Distance between the two side pins' tips, in world units, on desktop.
    *  0 = tips welded together at the hinge (converge to one point).
-   *  Positive values split the tips symmetrically along the phase axis —
+   *  Positive values split the tips symmetrically along the phase axis,
    *  pin A moves outward, pin B moves outward in its rotated frame. The
    *  total head-to-head separation at opposite-lean snapshot is
    *  2·sin(lean)·pinLength + tipSeparation, so this adds directly to
    *  whatever spread the lean already gives. */
   tipSeparation: 2.2,
   /** Same control, on mobile (≤640px). Kept as its own knob so you can
-   *  tighten the orbit on phones without affecting desktop — narrow
+   *  tighten the orbit on phones without affecting desktop -narrow
    *  viewports usually want less spread so all three pins read as one
    *  motif rather than scattered. */
   tipSeparationMobile: 1.78,
@@ -108,15 +108,15 @@ const SIDE_PINS = {
 
 /**
  * Two side pins hinged at the main pin's tip, leaning outward and orbiting
- * the vertical axis through that tip — tips stay welded while heads sweep
+ * the vertical axis through that tip -tips stay welded while heads sweep
  * a horizontal circle.
  *
  * Transform stack (outer→inner):
- *   anchor   — translates to (anchorX, anchorY, 0); this is the hinge point
- *   orbit    — rotation.y ticks every frame; drives the conical orbit
- *   phase    — identity for pin A, `phaseRadians` around Y for pin B
- *   lean     — rotation.z = -leanRadians tilts the pin along the cone
- *   YoovaPin — positionY = tipLift so the pin model's tip coincides with
+ *   anchor   -translates to (anchorX, anchorY, 0); this is the hinge point
+ *   orbit    -rotation.y ticks every frame; drives the conical orbit
+ *   phase    -identity for pin A, `phaseRadians` around Y for pin B
+ *   lean     -rotation.z = -leanRadians tilts the pin along the cone
+ *   YoovaPin -positionY = tipLift so the pin model's tip coincides with
  *              the anchor origin (ensures tip stays glued to main tip)
  */
 function OrbitingSidePins({
@@ -147,16 +147,16 @@ function OrbitingSidePins({
   /** Initial X offset applied to each pin's wrap group via JSX so the FIRST
    *  render already has them at their entrance position. Side pins only
    *  mount once the main-pin measurement resolves, which may happen after
-   *  PinsIntroDriver has already started advancing — without this, pins
+   *  PinsIntroDriver has already started advancing -without this, pins
    *  would flash at rest for one frame before the driver takes over. */
   wrapInitialX: number
 }) {
   // Orbit rotation + intro X-offsets are both driven externally by
-  // PinsIntroDriver — this component is now purely structural.
+  // PinsIntroDriver -this component is now purely structural.
   return (
     <group position={[anchorX, anchorY, anchorZ]}>
       <group ref={orbitRef}>
-        {/* Pin A — intro wrap carries the sliding-in X offset (in world-X
+        {/* Pin A -intro wrap carries the sliding-in X offset (in world-X
             space while orbit is held at 0, which it is throughout the
             intro). Tip offset / lean / YoovaPin nest inside. */}
         <group ref={sideAWrapRef} position={[wrapInitialX, 0, 0]}>
@@ -166,7 +166,7 @@ function OrbitingSidePins({
             </group>
           </group>
         </group>
-        {/* Pin B — phase rotation FIRST so its local +X points opposite pin
+        {/* Pin B -phase rotation FIRST so its local +X points opposite pin
             A's +X, then its own intro wrap (same sign of offset → opposite
             world direction → "slides in from the left"). */}
         <group rotation={[0, phaseRadians, 0]}>
@@ -184,16 +184,29 @@ function OrbitingSidePins({
 }
 
 /**
- * Drives all three pins' entrance animation + the side-pin orbit on a single
- * clock, so the pieces stay phase-locked. Renders nothing — it's a pure
- * side-effect component inside <Canvas>.
+ * Drives all three pins' entrance animation + the side-pin orbit on a
+ * single clock, AND drives the scroll-controlled exit (pins reverse out
+ * along the same path they entered).
  *
- *   t < delayS               → pins held at start positions (below / outside)
- *   delayS ≤ t < delay+dur   → ease-out-quart toward rest
- *   t ≥ delay+dur            → rest position, orbit begins advancing
+ * State machine:
+ *   t < delayS           → pins held at start positions (below / outside)
+ *   delayS ≤ t < dur     → ease-out-quart toward rest (entry)
+ *   t ≥ dur, scroll = 0  → at rest, orbit advances at full speed
+ *   t ≥ dur, scroll > 0  → pins begin reverse-exit, orbit slows linearly
+ *   scroll = 1           → pins fully back at start positions, orbit stopped
  *
- * Reduced motion: snap to rest on first frame, leave orbit frozen (matches
- * the prior static-orbit contract for that accessibility preference).
+ * Combined offset = `introRemaining + scrollExit`. Both are 0..1; in normal
+ * UX they're never simultaneously nonzero (scroll is locked during intro),
+ * so addition is the simplest correct combiner -entry hands off cleanly
+ * to exit at offset = 0 and they never overlap.
+ *
+ * Orbit rate decays as `(1 - scrollExit)` so by the time pins are fully
+ * exited (scrollExit = 1), rotation has stopped. This minimizes the
+ * "outward direction drifts with orbit phase" problem: as pins drift
+ * outward, the rotation that would change their drift vector is also
+ * winding down.
+ *
+ * Reduced motion: snap to rest on first frame, leave orbit frozen.
  */
 function PinsIntroDriver({
   mainWrapRef,
@@ -201,12 +214,16 @@ function PinsIntroDriver({
   sideAWrapRef,
   sideBWrapRef,
   orbitSpeed,
+  scrollProgressRef,
+  mainSpinMultiplierRef,
 }: {
   mainWrapRef: React.RefObject<THREE.Group | null>
   orbitRef: React.RefObject<THREE.Group | null>
   sideAWrapRef: React.RefObject<THREE.Group | null>
   sideBWrapRef: React.RefObject<THREE.Group | null>
   orbitSpeed: number
+  scrollProgressRef?: React.RefObject<number>
+  mainSpinMultiplierRef?: React.RefObject<number>
 }) {
   const startRef = useRef<number | null>(null)
   const reducedMotionRef = useRef(false)
@@ -220,29 +237,81 @@ function PinsIntroDriver({
     return () => mq.removeEventListener('change', update)
   }, [])
   useFrame((state, dt) => {
+    // Read scroll exit progress each frame (no re-renders -pure ref read).
+    const scrollExit = scrollProgressRef
+      ? Math.max(0, Math.min(1, scrollProgressRef.current))
+      : 0
+
     if (reducedMotionRef.current) {
-      if (mainWrapRef.current) mainWrapRef.current.position.y = 0
-      if (sideAWrapRef.current) sideAWrapRef.current.position.x = 0
-      if (sideBWrapRef.current) sideBWrapRef.current.position.x = 0
+      // Reduced motion: still respect scrollExit so the pins can be hidden
+      // by scrolling, but skip the timed entry curve.
+      if (mainWrapRef.current) mainWrapRef.current.position.y = PIN_INTRO.mainFromY * scrollExit
+      if (sideAWrapRef.current) sideAWrapRef.current.position.x = PIN_INTRO.sideFromX * scrollExit
+      if (sideBWrapRef.current) sideBWrapRef.current.position.x = PIN_INTRO.sideFromX * scrollExit
       return
     }
     if (startRef.current === null) startRef.current = state.clock.elapsedTime
     const elapsed = state.clock.elapsedTime - startRef.current
     const raw = Math.min(1, Math.max(0, (elapsed - PIN_INTRO.delayS) / PIN_INTRO.durationS))
-    // Ease-out-quart — fast departure, soft landing. Matches the overall
-    // "arrive and settle" feel of the headline's ease-in-out glide (same
-    // landing profile, slightly earlier arrival) without copying its exact
-    // curve — they're different motions (translate vs. scale+translate).
+    // Ease-out-quart -fast departure, soft landing on entry.
     const eased = 1 - Math.pow(1 - raw, 4)
-    const remaining = 1 - eased
-    if (mainWrapRef.current) mainWrapRef.current.position.y = PIN_INTRO.mainFromY * remaining
-    if (sideAWrapRef.current) sideAWrapRef.current.position.x = PIN_INTRO.sideFromX * remaining
-    if (sideBWrapRef.current) sideBWrapRef.current.position.x = PIN_INTRO.sideFromX * remaining
-    // Hold the orbit at rotation.y = 0 throughout the intro so the X offset
-    // (applied in each pin's local frame) reads as a world-space slide-in.
-    // Start advancing only once pins are fully docked at rest.
-    if (raw >= 1 && orbitRef.current) {
+    const introRemaining = 1 - eased
+    // Combined offset drives entry-then-exit on the same code path. Clamped
+    // Scroll-component of offset, scaled so pins fully exit by
+    // scrollProgress = SCROLL_EXIT_COMPLETE_AT (0.4). This matches the
+    // page-2 reveal threshold - by the time the second-page text fades
+    // in, the pins are already fully off-screen, not lingering halfway.
+    const SCROLL_EXIT_COMPLETE_AT = 0.4
+    const scrollOffset = Math.min(1, scrollExit / SCROLL_EXIT_COMPLETE_AT)
+    const totalOffset = Math.min(1, introRemaining + scrollOffset)
+    const cleanOffset = totalOffset < 0.0005 ? 0 : totalOffset
+
+    // Main pin Y translation - unchanged. mainFromY is -7 (below screen).
+    if (mainWrapRef.current) mainWrapRef.current.position.y = PIN_INTRO.mainFromY * cleanOffset
+
+    // Side pin translation - COUNTER-ROTATED so pins always exit world
+    // +X / -X regardless of the frozen orbit angle.
+    //
+    // SCROLL_SIDE_EXIT_FAR is intentionally MUCH larger than
+    // PIN_INTRO.sideFromX (entry distance). At certain orbit angles, the
+    // pin's tip-separation offset and lean rotation push the pin's head a
+    // few units past the wrap's translated position - with the entry
+    // distance of 9, that could leave the pin head still in viewport.
+    // Pushing the wrap to 22 puts the head well past the visible frame
+    // at every orbit angle. Doesn't affect intro entry feel (entry uses
+    // sideFromX, only scroll exit uses this larger value).
+    //
+    // Math: orbit rotation R(θ) maps pin's local (x,0,z) to world. To
+    // make world position = (target * c, 0, 0), the local position must
+    // be R(-θ) applied to that = (cos θ, 0, sin θ) * target * c.
+    const SCROLL_SIDE_EXIT_FAR = 22
+    const sideExit =
+      PIN_INTRO.sideFromX * introRemaining + SCROLL_SIDE_EXIT_FAR * scrollOffset
+    const orbitTheta = orbitRef.current?.rotation.y ?? 0
+    const cosT = Math.cos(orbitTheta)
+    const sinT = Math.sin(orbitTheta)
+    if (sideAWrapRef.current) {
+      sideAWrapRef.current.position.set(sideExit * cosT, 0, sideExit * sinT)
+    }
+    if (sideBWrapRef.current) {
+      sideBWrapRef.current.position.set(sideExit * cosT, 0, sideExit * sinT)
+    }
+
+    // Orbit handling: raw >= 1 + at rest → orbit ticks normally; otherwise
+    // (intro OR scrolling) orbit is frozen. Combined with the counter-
+    // rotation above, this means: at rest pins orbit naturally; scroll
+    // freezes orbit AND flips the pins to clean world-space translation.
+    const isScrolling = scrollExit > 0.0005
+    if (raw >= 1 && orbitRef.current && !isScrolling) {
       orbitRef.current.rotation.y += dt * orbitSpeed
+    }
+
+    // Main pin spin: paused during scroll so the pin freezes alongside
+    // the side pins (user wants ALL THREE pins frozen while scrolling).
+    // Resumes from the same angle on scroll-end - no visible jump,
+    // rebuild matches the exact pre-scroll orientation.
+    if (mainSpinMultiplierRef) {
+      mainSpinMultiplierRef.current = isScrolling ? 0 : 1
     }
   })
   return null
@@ -251,7 +320,7 @@ function PinsIntroDriver({
 /**
  * Installs a PMREM-filtered RoomEnvironment onto scene.environment so the
  * pin's PBR material gets realistic spec reflections / soft ambient.
- * Stays invisible — this is IBL, not a visible skybox.
+ * Stays invisible -this is IBL, not a visible skybox.
  */
 function SceneEnvironment({ intensity = 0.6 }: { intensity?: number }) {
   const { scene, gl } = useThree()
@@ -272,10 +341,14 @@ function SceneEnvironment({ intensity = 0.6 }: { intensity?: number }) {
 interface HeroSceneProps {
   pinPositionY?: number
   onPinMeasured?: (info: PinMeasurement) => void
+  /** Live scroll progress (0→1) read each frame to drive the zoom-into-
+   *  the-pin animation. Passed as a ref so updates don't re-render the
+   *  React tree -only the in-canvas useFrame hook touches it. */
+  scrollProgressRef?: React.RefObject<number>
 }
 
 /**
- * Reactive narrow-viewport hook — re-reads on resize/rotate so the Canvas
+ * Reactive narrow-viewport hook -re-reads on resize/rotate so the Canvas
  * DPR cap updates when a tablet flips into landscape instead of freezing
  * at whatever width loaded first.
  */
@@ -292,7 +365,7 @@ function useIsNarrowViewport() {
   return narrow
 }
 
-export default function HeroScene({ pinPositionY = -0.6, onPinMeasured }: HeroSceneProps) {
+export default function HeroScene({ pinPositionY = -0.6, onPinMeasured, scrollProgressRef }: HeroSceneProps) {
   const isMobileViewport = useIsNarrowViewport()
 
   // Local copy of the main pin's measurement. Drives side pin placement
@@ -311,12 +384,19 @@ export default function HeroScene({ pinPositionY = -0.6, onPinMeasured }: HeroSc
   // Refs for the intro animation. Created once here and passed down so the
   // PinsIntroDriver can mutate all three pins' wrap groups from a single
   // useFrame (keeps the three entrances phase-locked) and also hold the
-  // side-pin orbit at rotation.y = 0 for the duration of the intro.
+  // side-pin orbit at rotation.y = 0 for the duration of the intro. The
+  // SAME driver also handles scroll-driven exit: pins reverse out of frame
+  // along the same path they entered.
   const mainWrapRef = useRef<THREE.Group | null>(null)
   const orbitRef = useRef<THREE.Group | null>(null)
   const sideAWrapRef = useRef<THREE.Group | null>(null)
   const sideBWrapRef = useRef<THREE.Group | null>(null)
-  // Initial positions for the wrap groups — applied via JSX so the VERY
+  // Multiplier for the main pin's spin. PinsIntroDriver writes 0 when
+  // scrolling so all three pins freeze together; 1 at rest so the main
+  // pin resumes spinning from its last paused angle (no visible jump,
+  // rebuild matches pre-scroll orientation exactly).
+  const mainSpinMultiplierRef = useRef(1)
+  // Initial positions for the wrap groups -applied via JSX so the VERY
   // FIRST render already has pins off-screen. Without this, there'd be a
   // one-frame flash of pins at their rest positions before PinsIntroDriver's
   // useFrame writes the eased offset.
@@ -366,18 +446,18 @@ export default function HeroScene({ pinPositionY = -0.6, onPinMeasured }: HeroSc
       <Suspense fallback={null}>
         <SceneEnvironment intensity={0.45} />
 
-        {/* Soft fill — won't crush the IBL contribution */}
+        {/* Soft fill -won't crush the IBL contribution */}
         <ambientLight intensity={0.15} />
 
-        {/* Key light — no shadows (contact-shadow plane removed) */}
+        {/* Key light -no shadows (contact-shadow plane removed) */}
         <directionalLight position={[3, 5, 4]} intensity={0.9} color="#ffffff" />
 
-        {/* Cool rim light — shapes the silhouette without tinting the face */}
+        {/* Cool rim light -shapes the silhouette without tinting the face */}
         <directionalLight position={[-4, 2, -3]} intensity={0.2} color="#ffffff" />
 
         <Starfield />
 
-        {/* Main pin wrapped in an intro group — slides up from mainFromY to
+        {/* Main pin wrapped in an intro group -slides up from mainFromY to
             0. YoovaPin's measurement uses getWorldPosition, so its reported
             deltas (bottomOffsetY, centerOffsetY) are invariant under this
             translation: the main pin can start off-screen and still emit
@@ -385,17 +465,18 @@ export default function HeroScene({ pinPositionY = -0.6, onPinMeasured }: HeroSc
             alignment correct no matter which frame the measurement fires on. */}
         <group ref={mainWrapRef} position={[0, mainWrapInitialY, 0]}>
           {/* Static 90° Y-rotation to align the main pin's face orientation
-              with the side pins (side pins get their facing from the orbit
-              frame; the bare main pin needs an extra phase offset so all
-              three read as the same motif rather than "center pin flipped
-              90° from the other two"). Spin still accumulates on top of
-              this via YoovaPin's own useFrame. */}
+              with the side pins. */}
           <group rotation={[0, Math.PI / 2, 0]}>
-            <YoovaPin positionY={pinPositionY} scale={MAIN_SCALE} onMeasured={handleMeasured} />
+            <YoovaPin
+              positionY={pinPositionY}
+              scale={MAIN_SCALE}
+              spinMultiplierRef={mainSpinMultiplierRef}
+              onMeasured={handleMeasured}
+            />
           </group>
         </group>
 
-        {/* Side pins appear only after measurement — without it we'd have
+        {/* Side pins appear only after measurement -without it we'd have
             to guess bottomOffsetY and their tips wouldn't converge at the
             main tip. Rendering is cheap here because the glb is already
             loaded (instances share the useLoader cache via MODEL_URL).
@@ -403,6 +484,9 @@ export default function HeroScene({ pinPositionY = -0.6, onPinMeasured }: HeroSc
             sweeps their heads on a horizontal circle above it. Each pin's
             wrap group starts pre-offset on X so the first render already
             has them off-frame; PinsIntroDriver eases them to 0. */}
+        {/* Side pins appear only after main-pin measurement so their tips
+            converge at the main pin's tip. Rendering is cheap because the
+            glb is cached via useLoader. */}
         {measurement && (
           <OrbitingSidePins
             anchorX={SIDE_PINS.anchorOffsetX}
@@ -420,15 +504,18 @@ export default function HeroScene({ pinPositionY = -0.6, onPinMeasured }: HeroSc
           />
         )}
 
-        {/* Single driver for all three pins' intro + the side-pin orbit.
-            Keeps the three entrances phase-locked on one clock and holds
-            the orbit at 0 until docking finishes. */}
+        {/* Single driver for all three pins' intro AND scroll-driven exit.
+            Reads scrollProgressRef each frame; pins reverse out along the
+            same path they entered, the orbit eases back to 0 on rest, and
+            the main pin's own spin runs continuously throughout. */}
         <PinsIntroDriver
           mainWrapRef={mainWrapRef}
           orbitRef={orbitRef}
           sideAWrapRef={sideAWrapRef}
           sideBWrapRef={sideBWrapRef}
           orbitSpeed={SIDE_PINS.orbitSpeed}
+          scrollProgressRef={scrollProgressRef}
+          mainSpinMultiplierRef={mainSpinMultiplierRef}
         />
       </Suspense>
     </Canvas>

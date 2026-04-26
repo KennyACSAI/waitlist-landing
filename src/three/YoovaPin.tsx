@@ -18,17 +18,21 @@ interface YoovaPinProps {
   rotationZ?: number
   scale?: number
   spinSpeed?: number
+  /** Per-frame multiplier on spinSpeed (read each frame, no React renders).
+   *  Lets a parent driver pause/resume spin without remounting the pin.
+   *  When omitted, spin runs at full spinSpeed continuously. */
+  spinMultiplierRef?: React.RefObject<number>
   onMeasured?: (info: PinMeasurement) => void
 }
 
 /**
- * Loads the Yoova pin .glb as-is — keeps the original baked PBR colors
- * and textures — and spins it on Y. The only material tweak is enabling
+ * Loads the Yoova pin .glb as-is -keeps the original baked PBR colors
+ * and textures -and spins it on Y. The only material tweak is enabling
  * alpha-cutout + DoubleSide so the modeled hole in the pin head renders
  * as a real see-through rather than a solid disc.
  *
  * Euler order is XYZ (three.js default): rotation.y spins the pin around
- * its local vertical axis, then rotation.z tilts the whole thing — so a
+ * its local vertical axis, then rotation.z tilts the whole thing -so a
  * fixed rotationZ with continuously incrementing rotation.y renders as
  * "tilted pin spinning around its own long axis" (what we want for the
  * side pins in the three-pin logo composition).
@@ -39,12 +43,13 @@ export default function YoovaPin({
   rotationZ = 0,
   scale = 2,
   spinSpeed = 0.6,
+  spinMultiplierRef,
   onMeasured,
 }: YoovaPinProps) {
   const gltf = useLoader(GLTFLoader, MODEL_URL, (loader) => {
     ;(loader as GLTFLoader).setMeshoptDecoder(MeshoptDecoder)
   })
-  // Each instance needs its own Object3D — a single Object3D can only
+  // Each instance needs its own Object3D -a single Object3D can only
   // belong to one parent. Without cloning, mounting the second YoovaPin
   // re-parents the shared gltf.scene and the first pin silently empties.
   // Deep clone (true) copies descendants; geometry and materials stay
@@ -66,7 +71,7 @@ export default function YoovaPin({
     sceneClone.traverse((obj) => {
       const mesh = obj as THREE.Mesh
       if (!mesh.isMesh) return
-      // Shadows fully disabled — no contact shadow plane in the scene.
+      // Shadows fully disabled -no contact shadow plane in the scene.
       mesh.castShadow = false
       mesh.receiveShadow = false
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
@@ -84,14 +89,14 @@ export default function YoovaPin({
     // One-shot: measure world-space AABB so the layout code can align the
     // DOM placeholder to the pin's actual on-screen footprint. Values are
     // reported RELATIVE to the pin's own world position (via getWorldPosition)
-    // so any ancestor transform — e.g. an intro-animation wrapper that
-    // offsets the pin during slide-in — doesn't leak into the measurement.
+    // so any ancestor transform -e.g. an intro-animation wrapper that
+    // offsets the pin during slide-in -doesn't leak into the measurement.
     //
     // Deferred to the next frame via rAF because useEffect fires after
     // React commit but potentially BEFORE R3F's first render tick that
     // walks the scene graph and updates matrixWorld on ancestors. If we
     // measure synchronously, setFromObject() can read identity
-    // matrixWorld for the intro wrapper + 90° rotation group — Box3
+    // matrixWorld for the intro wrapper + 90° rotation group -Box3
     // lands in the wrong coordinate frame, bottomOffsetY comes out
     // wrong, and side pins anchor to a nonsensical tip position.
     // Dev works because StrictMode double-invokes effects and the
@@ -124,7 +129,12 @@ export default function YoovaPin({
 
   useFrame((_, dt) => {
     if (!groupRef.current || reducedMotionRef.current) return
-    groupRef.current.rotation.y += dt * spinSpeed
+    // Multiplier defaults to 1 (full spin). Parent can write 0 to pause
+    // - rotation simply stops accumulating, so resume picks up from the
+    // exact same angle. Side pins that don't need pausing pass no ref
+    // and get the default 1 every frame.
+    const multiplier = spinMultiplierRef?.current ?? 1
+    groupRef.current.rotation.y += dt * spinSpeed * multiplier
   })
 
   return (

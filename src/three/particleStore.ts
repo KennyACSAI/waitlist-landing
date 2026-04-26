@@ -1,7 +1,7 @@
 /**
  * A tiny module-level store for particle "mood". Writers are DOM-side
  * (keystrokes in the email input, form submit) and the reader is the
- * ParticleField's useFrame loop. We intentionally skip React subscriptions —
+ * ParticleField's useFrame loop. We intentionally skip React subscriptions,
  * these values change often and drive uniforms, not render output, so plain
  * refs are ideal.
  */

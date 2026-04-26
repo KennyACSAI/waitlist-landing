@@ -9,7 +9,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 interface WaitlistFormProps {
   variant?: 'hero' | 'inline'
   /** Fires whenever the form's internal status changes. Lets the parent
-   *  react to success/error — e.g. hide a social-proof line that would
+   *  react to success/error -e.g. hide a social-proof line that would
    *  otherwise overlap the absolutely-positioned status message. */
   onStatusChange?: (status: Status) => void
 }
@@ -17,7 +17,7 @@ interface WaitlistFormProps {
 /**
  * Maps a DOM element's on-screen center to a world-space point on the z=0
  * plane using the same camera setup as HeroScene (position=[0,0,7.5], fov=55).
- * Kept in sync with HeroScene.tsx — if the camera changes, update this.
+ * Kept in sync with HeroScene.tsx -if the camera changes, update this.
  */
 function inputCenterToWorld(el: HTMLElement) {
   const rect = el.getBoundingClientRect()
@@ -118,7 +118,7 @@ export default function WaitlistForm({ variant = 'hero', onStatusChange }: Waitl
               // "Please enter a valid email address.") stays visible
               // at opacity-100 after the user types/deletes, while
               // App.tsx simultaneously fades the social-proof line
-              // back in — both show stacked.
+              // back in -both show stacked.
               if (status !== 'idle') {
                 setStatus('idle')
                 setMessage('')

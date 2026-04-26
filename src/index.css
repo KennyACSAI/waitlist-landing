@@ -28,7 +28,7 @@
   }
 
   /* Default focus ring. Scoped to body so inner form elements can opt out
-     via their own rules — a 4px rectangular outline reads broken around a
+     via their own rules -a 4px rectangular outline reads broken around a
      rounded-full pill. */
   body :focus-visible {
     outline: 2px solid var(--brand);
@@ -36,7 +36,7 @@
     border-radius: 4px;
   }
 
-  /* Email pill has no focus outline — the input inside is already
+  /* Email pill has no focus outline -the input inside is already
      outline-none, and the default body :focus-visible rule is
      suppressed here via a more specific selector on the input. */
   .liquid-glass-apple input:focus-visible {
@@ -47,10 +47,10 @@
 @layer components {
   /* Apple-style liquid glass (adapted from lucasromerodb/liquid-glass-effect-macos
      for a dark theme). Four-layer stack:
-       __effect  — backdrop blur + SVG distortion filter
-       __tint    — translucent wash, dialed low because our bg is dark
-       __shine   — inset highlight simulating refractive edges
-       __content — actual children, sits on top */
+       __effect  -backdrop blur + SVG distortion filter
+       __tint    -translucent wash, dialed low because our bg is dark
+       __shine   -inset highlight simulating refractive edges
+       __content -actual children, sits on top */
   .liquid-glass-apple {
     position: relative;
     display: flex;
@@ -103,7 +103,7 @@
     z-index: 3;
     width: 100%;
   }
-  /* Edge-bottom variant — used by the sticky top bar where we only want
+  /* Edge-bottom variant -used by the sticky top bar where we only want
      the glass to register its presence via a soft bottom edge (drop
      shadow below + faint highlight line at the bottom). Kills the outer
      halo and the __shine's 4-sided inset rim so the top/left/right edges
@@ -129,12 +129,12 @@
     background-clip: text;
   }
 
-  /* Editorial flat pill — solid brand teal, no gloss/glass.
+  /* Editorial flat pill -solid brand teal, no gloss/glass.
      Matches the template's NOTIFY ME pill, recolored to brand.
      Custom transition (not Tailwind's `transition-colors`) so the
      background AND text-color swaps between teal and white run on
      the same 500ms curve. Longer than the default keystroke cadence
-     so the color journey reads as deliberate — teal while idle,
+     so the color journey reads as deliberate -teal while idle,
      drifting to white as the user types a partial email, then
      returning to teal the moment it's well-formed. */
   .btn-liquid-glass {
@@ -151,13 +151,13 @@
   .btn-liquid-glass:hover:not(:disabled) {
     background: var(--brand-hover);
   }
-  /* Inactive variant — applied while the user is typing a partial/invalid
+  /* Inactive variant -applied while the user is typing a partial/invalid
      email. Frosted dark glass: a deep translucent well with its own
      backdrop blur, so the button reads as "gated behind glass, not
      yet accepting input." Integrates naturally with the surrounding
      liquid-glass pill's aesthetic instead of fighting it with solid
      white (which reads as gray over dark bg) or muted teal (which
-     still reads "go"). Still clickable — submitting an invalid email
+     still reads "go"). Still clickable -submitting an invalid email
      triggers the inline error. Backdrop-filter itself doesn't
      transition; only background-color + color animate on the 500ms
      curve inherited from .btn-liquid-glass above. */
@@ -171,7 +171,7 @@
     background: rgba(10, 15, 20, 0.7);
   }
 
-  /* PC spacer single-knob — all four vertical gaps below the header share a
+  /* PC spacer single-knob -all four vertical gaps below the header share a
      single flex-grow value on ≥640px viewports. The value is sourced from
      --pc-spacer-flex on the page root (set from PC_SPACER_FLEX in App.tsx),
      so one number controls every gap and the four distances stay equal.
@@ -185,7 +185,7 @@
     }
   }
 
-  /* Editorial nav tokens — mirror the template's tiny top-bar */
+  /* Editorial nav tokens -mirror the template's tiny top-bar */
   .nav-link {
     font-family: 'Inclusive Sans', system-ui, sans-serif;
     font-size: 12px;
@@ -207,22 +207,22 @@
 
 /* Intro choreography.
    Root carries data-intro = "pending" | "enter" | "done".
-     pending — useLayoutEffect hasn't measured yet. Hide root to avoid a flash
+     pending -useLayoutEffect hasn't measured yet. Hide root to avoid a flash
                of the resting layout before the transform is applied.
-     enter   — headline is translated to viewport center and scaled up via
+     enter   -headline is translated to viewport center and scaled up via
                inline style on .intro-headline; everything else is hidden /
                shifted down.
-     done    — transform removed from headline, fade-up elements settle. All
+     done    -transform removed from headline, fade-up elements settle. All
                transitions fire here.
 
    .intro-headline transitions its own transform (driven by inline style).
-   .intro-fade backgrounds fade opacity only (no translate — they're fixed
+   .intro-fade backgrounds fade opacity only (no translate -they're fixed
    full-viewport layers, translating them reveals empty ink-950).
    .intro-fade-up foreground content both fades AND rises slightly. */
 /* Headline motion is split across TWO elements so translate and scale can
    transition on different timelines:
-     .intro-headline-wrap  — carries the translate (viewport center → rest)
-     .intro-headline       — carries the scale (oversized → final, ONE
+     .intro-headline-wrap  -carries the translate (viewport center → rest)
+     .intro-headline       -carries the scale (oversized → final, ONE
                              continuous transition) and the opening
                              opacity fade
 
@@ -231,7 +231,7 @@
      reliably cross-browser. During pending/enter, transform-duration is
      forced to 0 so delta re-measurements (triggered by layout shifts
      like the async pin glb finishing load) update instantly.
-   - Uses cubic-bezier(0.4, 0, 0.2, 1) — standard ease-in-out — for a
+   - Uses cubic-bezier(0.4, 0, 0.2, 1) -standard ease-in-out -for a
      gentler departure from rest. The aggressive ease-out curve we use
      elsewhere starts fast, which made the glide feel like it "popped"
      out of the hold. Ease-in-out ramps up gradually, so translate
@@ -241,7 +241,7 @@
    - scale transitions over 2500ms, one continuous ease that carries the
      text from headlineStartScale (e.g. 2.1) to 1 across the FULL intro
      (fade-in + hold + glide). Because the transition doesn't restart at
-     the hold→glide boundary, there's no velocity-zero pause — the text
+     the hold→glide boundary, there's no velocity-zero pause -the text
      is always shrinking, so when translate kicks in on top of it the
      combined motion reads as continuous, not stop-start.
    - opacity fades in over 1100ms on pending→enter. During pending,
@@ -271,7 +271,7 @@
     opacity 1400ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 1500ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-/* will-change is expensive — only hint the GPU during the transition
+/* will-change is expensive -only hint the GPU during the transition
    (enter phase + the couple of seconds while it settles). Leaving it on
    permanently pins elements to their own compositor layer, which on iOS
    renders at reduced precision and causes blurry backdrop-filter
@@ -282,11 +282,11 @@
 
 /* Pin placeholder height is locked BEFORE the intro's glide phase (the
    pinScreenH update effect in App.tsx is gated on !introDone), so no
-   transition is needed — any flex-spacer redistribution happens while
+   transition is needed -any flex-spacer redistribution happens while
    layers are still hidden during fade-in, not after the text has
    visibly landed. A transition here would re-introduce a post-landing
    "stretching" shift if pinScreenH ever changed after introDone. */
-/* Keep fade-layers hidden during BOTH pending and enter — relying on a
+/* Keep fade-layers hidden during BOTH pending and enter -relying on a
    single visibility:hidden on the root proved leaky; explicit per-class
    opacity/transform rules guarantee the first paint is just black + the
    centered headline, nothing else. */
@@ -300,7 +300,7 @@
   transform: translateY(80px);
 }
 /* During pending, headline delta hasn't been measured yet, so hide it
-   too — otherwise it would flash at its resting position (not centered)
+   too -otherwise it would flash at its resting position (not centered)
    before useLayoutEffect commits the transform. */
 [data-intro='pending'] .intro-headline {
   opacity: 0;
@@ -313,12 +313,12 @@
   }
 }
 
-/* Reveal animation for the header bar and form wrapper — both contain
+/* Reveal animation for the header bar and form wrapper -both contain
    .liquid-glass-apple with backdrop-filter. Ancestor opacity < 1 kills
    backdrop-filter on the descendant __effect element (iOS Safari and
    some Chromium forks persistently, others during the transition only),
    so we CANNOT animate opacity on .intro-reveal-header / .intro-reveal-form
-   themselves — doing so broke the glass entirely on PC and caused a
+   themselves -doing so broke the glass entirely on PC and caused a
    visible blink on mobile.
 
    Instead: animate opacity on the INNER glass layers (__tint, __shine,
@@ -329,9 +329,9 @@
 
    Layering during the reveal:
      __effect (opacity 1, blur always live)
-     __tint (fades 0 → 1) — white 10% overlay
-     __shine (fades 0 → 1) — edge highlight
-     __content (fades 0 → 1) — logo, text, form children
+     __tint (fades 0 → 1) -white 10% overlay
+     __shine (fades 0 → 1) -edge highlight
+     __content (fades 0 → 1) -logo, text, form children
 
    Triggered by data-intro='done'. visibility on the outer wrapper
    still gates the element before introGlideStarted flips, preventing

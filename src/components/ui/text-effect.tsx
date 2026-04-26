@@ -209,7 +209,7 @@ export function TextEffect({
           // For per='line' we need whitespace-pre-wrap so the explicit
           // newlines in the input string actually produce line breaks.
           // For per='word' / per='char' the segments are inline-blocks
-          // with no whitespace between them — pre-wrap allows the browser
+          // with no whitespace between them -pre-wrap allows the browser
           // to break BETWEEN those inline-blocks at sub-pixel overflow,
           // which is what was wrapping the trailing 'g' onto a new line.
           // nowrap pins them to a single visual row.
