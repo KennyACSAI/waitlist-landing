@@ -770,7 +770,7 @@ export default function App() {
             aria-hidden={!showSocialProof}
             className="mt-2 flex items-center justify-center gap-1.5 text-center text-sm text-white/55 transition-opacity duration-300"
             style={{ opacity: showSocialProof ? 1 : 0 }}>
-            <span>Limited early access · 1,200+ already on the list</span>
+            <span>Limited early access · 100+ already on the list</span>
           </p>
         </div>
       </main>
