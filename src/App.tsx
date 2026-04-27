@@ -611,17 +611,17 @@ export default function App() {
             </a>
             <div className="flex items-center">
               <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                aria-disabled="true"
+                href="https://www.instagram.com/yoova_social/"
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label="Instagram"
                 className="inline-flex min-h-11 min-w-11 items-center justify-center text-white/70 transition-colors hover:text-white">
                 <InstagramIcon />
               </a>
               <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                aria-disabled="true"
+                href="https://www.linkedin.com/company/yoova-social"
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label="LinkedIn"
                 className="inline-flex min-h-11 min-w-11 items-center justify-center text-white/70 transition-colors hover:text-white">
                 <LinkedInIcon />
