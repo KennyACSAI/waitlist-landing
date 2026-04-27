@@ -987,9 +987,8 @@ function HowYoovaWorks() {
 // flow (no segment-split = no awkward 3-line wraps from inline-block
 // chains). Italic on imperatives only.
 const PAGE_2_LINES: Array<{ italic: boolean; text: string }> = [
-  { italic: false, text: 'A social map of real events.' },
+  { italic: false, text: 'A social map of real events only.' },
   { italic: true, text: 'Show up.' },
-  { italic: true, text: 'Reveal yourself only after meeting.' },
 ]
 
 /**
